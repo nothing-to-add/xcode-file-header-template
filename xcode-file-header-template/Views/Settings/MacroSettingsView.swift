@@ -10,6 +10,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import CustomLogger
 
 struct MacroSettingsView: View {
     @EnvironmentObject var templateManager: TemplateManager
@@ -104,7 +105,7 @@ struct MacroSettingsView: View {
                     let data = try PropertyListSerialization.data(fromPropertyList: templateManager.globalMacros, format: .xml, options: 0)
                     try data.write(to: url)
                 } catch {
-                    print("Export failed: \(error)")
+                    Logger.shared.error("Export failed: \(error)")
                 }
             }
         }
@@ -120,7 +121,7 @@ struct MacroSettingsView: View {
                 do {
                     let data = try Data(contentsOf: url)
                     guard let importedMacros = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
-                        print("Invalid plist format")
+                        Logger.shared.error("Invalid plist format")
                         return
                     }
                     
@@ -128,7 +129,7 @@ struct MacroSettingsView: View {
                     templateManager.saveGlobalMacros()
                     loadGlobalMacros() // Refresh display
                 } catch {
-                    print("Import failed: \(error)")
+                    Logger.shared.error("Import failed: \(error)")
                 }
             }
         }
@@ -145,7 +146,7 @@ struct MacroSettingsView: View {
             }
             loadGlobalMacros() // Refresh display
         } catch {
-            print("Failed to reset: \(error)")
+            Logger.shared.error("Failed to reset: \(error)")
         }
     }
 }

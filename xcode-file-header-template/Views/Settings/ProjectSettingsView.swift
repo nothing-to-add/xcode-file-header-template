@@ -10,6 +10,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import CustomLogger
 
 struct ProjectSettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -166,7 +167,7 @@ struct ProjectSettingsView: View {
                     loadProjectSettings()
                 }
             case .failure(let error):
-                print("Failed to select folder: \(error)")
+                Logger.shared.error("Failed to select folder: \(error)")
             }
         }
         .frame(minWidth: 600, minHeight: 500)

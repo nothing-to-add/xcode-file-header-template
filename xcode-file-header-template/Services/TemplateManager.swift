@@ -11,6 +11,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import CustomLogger
 
 class TemplateManager: ObservableObject {
     @Published var globalMacros: [String: String] = [:]
@@ -65,7 +66,7 @@ class TemplateManager: ObservableObject {
                 }
             }
         } catch {
-            print("Failed to load global IDETemplateMacros: \(error)")
+            Logger.shared.error("Failed to load global IDETemplateMacros: \(error)")
             globalMacros = getDefaultGlobalMacros()
         }
         
@@ -80,9 +81,9 @@ class TemplateManager: ObservableObject {
         do {
             let data = try PropertyListSerialization.data(fromPropertyList: globalMacros, format: .xml, options: 0)
             try data.write(to: globalIDETemplateMacrosURL)
-            print("Successfully saved global IDETemplateMacros to: \(globalIDETemplateMacrosURL.path)")
+            Logger.shared.info("Successfully saved global IDETemplateMacros to: \(globalIDETemplateMacrosURL.path)")
         } catch {
-            print("Failed to save global IDETemplateMacros: \(error)")
+            Logger.shared.error("Failed to save global IDETemplateMacros: \(error)")
         }
     }
     
@@ -135,7 +136,7 @@ class TemplateManager: ObservableObject {
                 }
             }
         } catch {
-            print("Failed to load project IDETemplateMacros: \(error)")
+            Logger.shared.error("Failed to load project IDETemplateMacros: \(error)")
             projectMacros = [:]
         }
     }
@@ -148,9 +149,9 @@ class TemplateManager: ObservableObject {
         do {
             let data = try PropertyListSerialization.data(fromPropertyList: projectMacros, format: .xml, options: 0)
             try data.write(to: projectMacrosURL)
-            print("Successfully saved project IDETemplateMacros to: \(projectMacrosURL.path)")
+            Logger.shared.info("Successfully saved project IDETemplateMacros to: \(projectMacrosURL.path)")
         } catch {
-            print("Failed to save project IDETemplateMacros: \(error)")
+            Logger.shared.error("Failed to save project IDETemplateMacros: \(error)")
         }
     }
     
@@ -265,7 +266,7 @@ class TemplateManager: ObservableObject {
             try FileManager.default.copyItem(at: globalIDETemplateMacrosURL, to: exportURL)
             return exportURL
         } catch {
-            print("Failed to export global macros: \(error)")
+            Logger.shared.error("Failed to export global macros: \(error)")
             return nil
         }
     }

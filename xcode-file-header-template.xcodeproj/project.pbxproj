@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F5E5D1A12EB82478006D6D48 /* CustomLogger in Frameworks */ = {isa = PBXBuildFile; productRef = F5E5D1A02EB82478006D6D48 /* CustomLogger */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F5AEC0EB2EA81CF800A9430B /* xcode-file-header-template.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "xcode-file-header-template.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F5E5D1A12EB82478006D6D48 /* CustomLogger in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "xcode-file-header-template";
 			packageProductDependencies = (
+				F5E5D1A02EB82478006D6D48 /* CustomLogger */,
 			);
 			productName = "xcode-file-header-template";
 			productReference = F5AEC0EB2EA81CF800A9430B /* xcode-file-header-template.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = F5AEC0E22EA81CF800A9430B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F5E5D19F2EB82478006D6D48 /* XCRemoteSwiftPackageReference "apple-custom-logger" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F5AEC0EC2EA81CF800A9430B /* Products */;
 			projectDirPath = "";
@@ -331,6 +340,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F5E5D19F2EB82478006D6D48 /* XCRemoteSwiftPackageReference "apple-custom-logger" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nothing-to-add/apple-custom-logger";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F5E5D1A02EB82478006D6D48 /* CustomLogger */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F5E5D19F2EB82478006D6D48 /* XCRemoteSwiftPackageReference "apple-custom-logger" */;
+			productName = CustomLogger;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F5AEC0E32EA81CF800A9430B /* Project object */;
 }

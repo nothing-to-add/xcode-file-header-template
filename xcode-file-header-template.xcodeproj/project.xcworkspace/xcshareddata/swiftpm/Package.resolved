@@ -1,0 +1,15 @@
+{
+  "originHash" : "cfb8ac524e02c3a454d095e1a653233d4eb1c1678ea8d2995129443ddceaef9a",
+  "pins" : [
+    {
+      "identity" : "apple-custom-logger",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/nothing-to-add/apple-custom-logger",
+      "state" : {
+        "branch" : "main",
+        "revision" : "c4f0330c8a3698710a132b2990812ec036cb8a95"
+      }
+    }
+  ],
+  "version" : 3
+}

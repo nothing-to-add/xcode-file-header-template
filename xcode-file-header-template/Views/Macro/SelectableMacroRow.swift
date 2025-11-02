@@ -9,6 +9,7 @@
 //
 
 import SwiftUI
+import CustomLogger
 
 struct SelectableMacroRow: View {
     let key: String
@@ -70,8 +71,8 @@ struct SelectableMacroRow: View {
             value: "MyAwesomeProject",
             isBuiltIn: true,
             isSelected: false,
-            onEdit: { print("Edit tapped") },
-            onDelete: { print("Delete tapped") }
+            onEdit: { Logger.shared.info("Edit tapped") },
+            onDelete: { Logger.shared.info("Delete tapped") }
         )
         
         SelectableMacroRow(
@@ -79,8 +80,8 @@ struct SelectableMacroRow: View {
             value: "This is a custom macro with some longer text to test truncation",
             isBuiltIn: false,
             isSelected: true,
-            onEdit: { print("Edit tapped") },
-            onDelete: { print("Delete tapped") }
+            onEdit: { Logger.shared.info("Edit tapped") },
+            onDelete: { Logger.shared.info("Delete tapped") }
         )
         
         SelectableMacroRow(
@@ -88,8 +89,8 @@ struct SelectableMacroRow: View {
             value: "File Header Template Content",
             isBuiltIn: true,
             isSelected: false,
-            onEdit: { print("Edit tapped") },
-            onDelete: { print("Delete tapped") }
+            onEdit: { Logger.shared.info("Edit tapped") },
+            onDelete: { Logger.shared.info("Delete tapped") }
         )
     }
     .padding()
