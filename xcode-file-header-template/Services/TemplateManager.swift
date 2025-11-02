@@ -13,183 +13,224 @@ import SwiftUI
 import Combine
 
 class TemplateManager: ObservableObject {
-    @Published var globalTemplates: [HeaderTemplate] = []
-    @Published var projectTemplates: [HeaderTemplate] = []
-    @Published var selectedGlobalTemplate: HeaderTemplate?
-    @Published var selectedProjectTemplate: HeaderTemplate?
+    @Published var globalMacros: [String: String] = [:]
+    @Published var projectMacros: [String: String] = [:]
     @Published var currentProjectPath: String = ""
+    @Published var availableTemplateKeys: [String] = []
     
-    private let globalTemplatesURL: URL
-    private let projectTemplatesFileName = ".xcodeheader.json"
+    private let globalIDETemplateMacrosURL: URL
+    private let projectIDETemplateMacrosFileName = "IDETemplateMacros.plist"
     
     init() {
-        // Store global templates in Application Support
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appFolder = appSupport.appendingPathComponent("XcodeFileHeaderTemplate")
-        self.globalTemplatesURL = appFolder.appendingPathComponent("GlobalTemplates.json")
+        // Path to Xcode's global IDETemplateMacros.plist
+        let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
+        self.globalIDETemplateMacrosURL = homeDirectory
+            .appendingPathComponent("Library")
+            .appendingPathComponent("Developer")
+            .appendingPathComponent("Xcode")
+            .appendingPathComponent("UserData")
+            .appendingPathComponent("IDETemplateMacros.plist")
         
-        createDirectoryIfNeeded()
-        loadGlobalTemplates()
-        loadDefaultTemplatesIfEmpty()
+        // Common Xcode template macro keys
+        self.availableTemplateKeys = [
+            "FILEHEADER",
+            "FULLUSERNAME", 
+            "COPYRIGHT",
+            "ORGANIZATIONNAME",
+            "PROJECTNAME",
+            "CLASSPREFIX"
+        ]
+        
+        createXcodeUserDataDirectoryIfNeeded()
+        loadGlobalMacros()
     }
     
     // MARK: - Directory Management
     
-    private func createDirectoryIfNeeded() {
-        let directory = globalTemplatesURL.deletingLastPathComponent()
+    private func createXcodeUserDataDirectoryIfNeeded() {
+        let directory = globalIDETemplateMacrosURL.deletingLastPathComponent()
         if !FileManager.default.fileExists(atPath: directory.path) {
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         }
     }
     
-    // MARK: - Global Templates
+    // MARK: - Global IDETemplateMacros Management
     
-    func loadGlobalTemplates() {
+    func loadGlobalMacros() {
         do {
-            let data = try Data(contentsOf: globalTemplatesURL)
-            globalTemplates = try JSONDecoder().decode([HeaderTemplate].self, from: data)
-            selectedGlobalTemplate = globalTemplates.first
+            let data = try Data(contentsOf: globalIDETemplateMacrosURL)
+            if let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+                globalMacros = plist.compactMapValues { value in
+                    return value as? String
+                }
+            }
         } catch {
-            print("Failed to load global templates: \(error)")
-            globalTemplates = []
+            print("Failed to load global IDETemplateMacros: \(error)")
+            globalMacros = getDefaultGlobalMacros()
+        }
+        
+        // Ensure we have at least default values
+        if globalMacros.isEmpty {
+            globalMacros = getDefaultGlobalMacros()
+            saveGlobalMacros()
         }
     }
     
-    func saveGlobalTemplates() {
+    func saveGlobalMacros() {
         do {
-            let data = try JSONEncoder().encode(globalTemplates)
-            try data.write(to: globalTemplatesURL)
+            let data = try PropertyListSerialization.data(fromPropertyList: globalMacros, format: .xml, options: 0)
+            try data.write(to: globalIDETemplateMacrosURL)
+            print("Successfully saved global IDETemplateMacros to: \(globalIDETemplateMacrosURL.path)")
         } catch {
-            print("Failed to save global templates: \(error)")
+            print("Failed to save global IDETemplateMacros: \(error)")
         }
     }
     
-    private func loadDefaultTemplatesIfEmpty() {
-        if globalTemplates.isEmpty {
-            globalTemplates = [
-                HeaderTemplate.defaultSwiftTemplate,
-                HeaderTemplate.minimalTemplate
-            ]
-            selectedGlobalTemplate = globalTemplates.first
-            saveGlobalTemplates()
+    private func getDefaultGlobalMacros() -> [String: String] {
+        return [
+            "FULLUSERNAME": NSFullUserName(),
+            "COPYRIGHT": "Copyright © \(Calendar.current.component(.year, from: Date())) \(NSFullUserName()). All rights reserved.",
+            "ORGANIZATIONNAME": "Your Organization",
+            "FILEHEADER": """
+//
+//  ___FILENAME___
+//  ___PROJECTNAME___
+//
+//  Created by ___FULLUSERNAME___ on ___DATE___.
+//  ___COPYRIGHT___
+//
+"""
+        ]
+    }
+    
+    func updateGlobalMacro(key: String, value: String) {
+        globalMacros[key] = value
+        saveGlobalMacros()
+    }
+    
+    func deleteGlobalMacro(key: String) {
+        globalMacros.removeValue(forKey: key)
+        saveGlobalMacros()
+    }
+    
+    func addCustomGlobalMacro(key: String, value: String) {
+        globalMacros[key] = value
+        if !availableTemplateKeys.contains(key) {
+            availableTemplateKeys.append(key)
         }
+        saveGlobalMacros()
     }
     
-    func addGlobalTemplate(_ template: HeaderTemplate) {
-        var newTemplate = template
-        newTemplate.isGlobal = true
-        globalTemplates.append(newTemplate)
-        saveGlobalTemplates()
-    }
+    // MARK: - Project IDETemplateMacros Management
     
-    func updateGlobalTemplate(_ template: HeaderTemplate) {
-        if let index = globalTemplates.firstIndex(where: { $0.id == template.id }) {
-            var updatedTemplate = template
-            updatedTemplate.lastModified = Date()
-            globalTemplates[index] = updatedTemplate
-            saveGlobalTemplates()
-        }
-    }
-    
-    func deleteGlobalTemplate(_ template: HeaderTemplate) {
-        globalTemplates.removeAll { $0.id == template.id }
-        if selectedGlobalTemplate?.id == template.id {
-            selectedGlobalTemplate = globalTemplates.first
-        }
-        saveGlobalTemplates()
-    }
-    
-    // MARK: - Project Templates
-    
-    func loadProjectTemplates(for projectPath: String) {
+    func loadProjectMacros(for projectPath: String) {
         currentProjectPath = projectPath
-        let projectTemplateURL = URL(fileURLWithPath: projectPath).appendingPathComponent(projectTemplatesFileName)
+        let projectMacrosURL = URL(fileURLWithPath: projectPath).appendingPathComponent(projectIDETemplateMacrosFileName)
         
         do {
-            let data = try Data(contentsOf: projectTemplateURL)
-            projectTemplates = try JSONDecoder().decode([HeaderTemplate].self, from: data)
-            selectedProjectTemplate = projectTemplates.first
+            let data = try Data(contentsOf: projectMacrosURL)
+            if let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+                projectMacros = plist.compactMapValues { value in
+                    return value as? String
+                }
+            }
         } catch {
-            print("Failed to load project templates: \(error)")
-            projectTemplates = []
-            selectedProjectTemplate = nil
+            print("Failed to load project IDETemplateMacros: \(error)")
+            projectMacros = [:]
         }
     }
     
-    func saveProjectTemplates() {
+    func saveProjectMacros() {
         guard !currentProjectPath.isEmpty else { return }
         
-        let projectTemplateURL = URL(fileURLWithPath: currentProjectPath).appendingPathComponent(projectTemplatesFileName)
+        let projectMacrosURL = URL(fileURLWithPath: currentProjectPath).appendingPathComponent(projectIDETemplateMacrosFileName)
         
         do {
-            let data = try JSONEncoder().encode(projectTemplates)
-            try data.write(to: projectTemplateURL)
+            let data = try PropertyListSerialization.data(fromPropertyList: projectMacros, format: .xml, options: 0)
+            try data.write(to: projectMacrosURL)
+            print("Successfully saved project IDETemplateMacros to: \(projectMacrosURL.path)")
         } catch {
-            print("Failed to save project templates: \(error)")
+            print("Failed to save project IDETemplateMacros: \(error)")
         }
     }
     
-    func addProjectTemplate(_ template: HeaderTemplate) {
-        var newTemplate = template
-        newTemplate.isGlobal = false
-        newTemplate.projectPath = currentProjectPath
-        projectTemplates.append(newTemplate)
-        saveProjectTemplates()
+    func updateProjectMacro(key: String, value: String) {
+        projectMacros[key] = value
+        saveProjectMacros()
     }
     
-    func updateProjectTemplate(_ template: HeaderTemplate) {
-        if let index = projectTemplates.firstIndex(where: { $0.id == template.id }) {
-            var updatedTemplate = template
-            updatedTemplate.lastModified = Date()
-            projectTemplates[index] = updatedTemplate
-            saveProjectTemplates()
+    func deleteProjectMacro(key: String) {
+        projectMacros.removeValue(forKey: key)
+        saveProjectMacros()
+    }
+    
+    func addCustomProjectMacro(key: String, value: String) {
+        projectMacros[key] = value
+        if !availableTemplateKeys.contains(key) {
+            availableTemplateKeys.append(key)
         }
+        saveProjectMacros()
     }
     
-    func deleteProjectTemplate(_ template: HeaderTemplate) {
-        projectTemplates.removeAll { $0.id == template.id }
-        if selectedProjectTemplate?.id == template.id {
-            selectedProjectTemplate = projectTemplates.first
+    func createProjectMacrosFile() {
+        guard !currentProjectPath.isEmpty else { return }
+        
+        if projectMacros.isEmpty {
+            projectMacros = getDefaultProjectMacros()
         }
-        saveProjectTemplates()
+        saveProjectMacros()
     }
     
-    // MARK: - Template Application
-    
-    func applyTemplateToFile(at filePath: String, template: HeaderTemplate, projectName: String? = nil, workspaceName: String? = nil) throws {
-        let fileURL = URL(fileURLWithPath: filePath)
-        
-        // Read existing file content
-        let existingContent = try String(contentsOf: fileURL)
-        
-        // Remove existing header if present
-        let contentWithoutHeader = removeExistingHeader(from: existingContent)
-        
-        // Generate new header
-        let newHeader = template.generateHeader(for: filePath, projectName: projectName, workspaceName: workspaceName)
-        
-        // Combine header with content
-        let newContent = newHeader + "\n" + contentWithoutHeader
-        
-        // Write back to file
-        try newContent.write(to: fileURL, atomically: true, encoding: .utf8)
+    private func getDefaultProjectMacros() -> [String: String] {
+        let projectName = URL(fileURLWithPath: currentProjectPath).lastPathComponent
+        return [
+            "PROJECTNAME": projectName,
+            "ORGANIZATIONNAME": globalMacros["ORGANIZATIONNAME"] ?? "Your Organization"
+        ]
     }
     
-    private func removeExistingHeader(from content: String) -> String {
-        let lines = content.components(separatedBy: .newlines)
-        var startIndex = 0
+    // MARK: - Macro Value Resolution
+    
+    func resolveAllMacros() -> [String: String] {
+        var resolved = globalMacros
         
-        // Skip initial comment lines
-        for (index, line) in lines.enumerated() {
-            let trimmedLine = line.trimmingCharacters(in: .whitespaces)
-            if trimmedLine.isEmpty || trimmedLine.hasPrefix("//") {
-                startIndex = index + 1
-            } else {
-                break
-            }
+        // Project macros override global ones
+        for (key, value) in projectMacros {
+            resolved[key] = value
         }
         
-        return lines.dropFirst(startIndex).joined(separator: "\n")
+        return resolved
+    }
+    
+    func previewFileHeader() -> String {
+        let resolvedMacros = resolveAllMacros()
+        var header = resolvedMacros["FILEHEADER"] ?? getDefaultGlobalMacros()["FILEHEADER"]!
+        
+        // Replace Xcode built-in placeholders with preview values
+        header = header.replacingOccurrences(of: "___FILENAME___", with: "ExampleFile.swift")
+        header = header.replacingOccurrences(of: "___PROJECTNAME___", with: resolvedMacros["PROJECTNAME"] ?? "MyProject")
+        header = header.replacingOccurrences(of: "___FULLUSERNAME___", with: resolvedMacros["FULLUSERNAME"] ?? NSFullUserName())
+        header = header.replacingOccurrences(of: "___DATE___", with: DateFormatter.shortDateFormatter.string(from: Date()))
+        header = header.replacingOccurrences(of: "___COPYRIGHT___", with: resolvedMacros["COPYRIGHT"] ?? "")
+        header = header.replacingOccurrences(of: "___ORGANIZATIONNAME___", with: resolvedMacros["ORGANIZATIONNAME"] ?? "")
+        
+        return header
+    }
+    
+    // MARK: - Backup and Restore
+    
+    func backupGlobalMacros() throws -> URL {
+        let backupURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("IDETemplateMacros_backup_\(Date().timeIntervalSince1970)")
+            .appendingPathExtension("plist")
+        
+        try FileManager.default.copyItem(at: globalIDETemplateMacrosURL, to: backupURL)
+        return backupURL
+    }
+    
+    func restoreGlobalMacros(from backupURL: URL) throws {
+        try FileManager.default.copyItem(at: backupURL, to: globalIDETemplateMacrosURL)
+        loadGlobalMacros()
     }
     
     // MARK: - Project Detection
@@ -209,15 +250,47 @@ class TemplateManager: ObservableObject {
         return projects
     }
     
-    func getActiveTemplate(for filePath: String) -> HeaderTemplate? {
-        let fileExtension = URL(fileURLWithPath: filePath).pathExtension
-        
-        // First check project-specific templates
-        if let projectTemplate = projectTemplates.first(where: { $0.fileExtensions.contains(fileExtension) }) {
-            return projectTemplate
-        }
-        
-        // Fallback to selected project template or global template
-        return selectedProjectTemplate ?? selectedGlobalTemplate ?? globalTemplates.first
+    func hasProjectMacros(at projectPath: String) -> Bool {
+        let projectMacrosURL = URL(fileURLWithPath: projectPath).appendingPathComponent(projectIDETemplateMacrosFileName)
+        return FileManager.default.fileExists(atPath: projectMacrosURL.path)
     }
+    
+    // MARK: - Import/Export
+    
+    func exportGlobalMacros() -> URL? {
+        let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
+        let exportURL = desktop.appendingPathComponent("IDETemplateMacros_export.plist")
+        
+        do {
+            try FileManager.default.copyItem(at: globalIDETemplateMacrosURL, to: exportURL)
+            return exportURL
+        } catch {
+            print("Failed to export global macros: \(error)")
+            return nil
+        }
+    }
+    
+    func importGlobalMacros(from url: URL) throws {
+        let data = try Data(contentsOf: url)
+        if let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+            let importedMacros = plist.compactMapValues { value in
+                return value as? String
+            }
+            
+            // Merge with existing macros
+            for (key, value) in importedMacros {
+                globalMacros[key] = value
+            }
+            
+            saveGlobalMacros()
+        }
+    }
+}
+
+extension DateFormatter {
+    static let shortDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter
+    }()
 }
