@@ -98,5 +98,18 @@ struct SelectedMacroDetailView: View {
 }
 
 #Preview {
-    SelectedMacroDetailView()
+    SelectedMacroDetailView(
+        key: "FILEHEADER",
+        value: """
+//
+//  ___FILENAME___
+//  ___PROJECTNAME___
+//
+//  Created by ___FULLUSERNAME___ on ___DATE___.
+//  ___COPYRIGHT___
+//
+""",
+        isGlobal: true,
+        templateManager: TemplateManager()
+    )
 }

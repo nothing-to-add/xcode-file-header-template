@@ -69,5 +69,16 @@ struct MacrosOverviewView: View {
 
 
 #Preview {
-    MacrosOverviewView()
+    MacrosOverviewView(
+        macros: [
+            "FILEBASENAME": "MyFile",
+            "PROJECTNAME": "xcode-file-header-template",
+            "FULLUSERNAME": "nothing-to-add",
+            "DATE": "03/11/2025",
+            "YEAR": "2025",
+            "ORGANIZATIONNAME": "nothing-to-add"
+        ],
+        isGlobal: true,
+        templateManager: TemplateManager()
+    )
 }

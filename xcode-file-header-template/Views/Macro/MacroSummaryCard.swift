@@ -36,5 +36,11 @@ struct MacroSummaryCard: View {
 }
 
 #Preview {
-    MacroSummaryCard()
+    VStack(spacing: 16) {
+        MacroSummaryCard(key: "FILEHEADER", value: "Example file header template content")
+        MacroSummaryCard(key: "PROJECTNAME", value: "xcode-file-header-template")
+        MacroSummaryCard(key: "FILENAME", value: "MacroSummaryCard.swift")
+        MacroSummaryCard(key: "AUTHOR", value: "nothing-to-add")
+    }
+    .padding()
 }

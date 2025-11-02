@@ -41,5 +41,16 @@ struct TemplateRowView: View {
 }
 
 #Preview {
-    TemplateRowView()
+    VStack(spacing: 8) {
+        TemplateRowView(
+            template: FileHeaderTemplate.defaultTemplates[0],
+            isSelected: false
+        )
+        
+        TemplateRowView(
+            template: FileHeaderTemplate.defaultTemplates[1],
+            isSelected: true
+        )
+    }
+    .padding()
 }

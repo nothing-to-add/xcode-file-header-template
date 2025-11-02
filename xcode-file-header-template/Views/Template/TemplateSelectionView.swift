@@ -82,7 +82,15 @@ struct TemplateSelectionView: View {
     
     private func updatePreview() {
         let template = templates[selectedIndex]
-        previewContent = template.content.replacingXcodePlaceholders()
+        let resolvedMacros = templateManager.resolveAllMacros()
+        
+        previewContent = template.content.replacingXcodePlaceholders(
+            filename: "ExampleFile.swift",
+            projectName: resolvedMacros["PROJECTNAME"] ?? "MyProject",
+            fullUserName: resolvedMacros["FULLUSERNAME"] ?? NSFullUserName(),
+            organizationName: resolvedMacros["ORGANIZATIONNAME"] ?? "Your Organization",
+            copyright: resolvedMacros["COPYRIGHT"]
+        )
     }
     
     private func applyTemplate() {
@@ -99,5 +107,10 @@ struct TemplateSelectionView: View {
 }
 
 #Preview {
-    TemplateSelectionView()
+    TemplateSelectionView(
+        templates: FileHeaderTemplate.defaultTemplates,
+        selectedIndex: .constant(0),
+        isGlobal: true,
+        templateManager: TemplateManager()
+    )
 }

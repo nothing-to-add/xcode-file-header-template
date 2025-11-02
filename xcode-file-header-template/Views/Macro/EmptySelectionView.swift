@@ -34,5 +34,5 @@ struct EmptySelectionView: View {
 }
 
 #Preview {
-    EmptySelectionView()
+    EmptySelectionView(isGlobal: false)
 }

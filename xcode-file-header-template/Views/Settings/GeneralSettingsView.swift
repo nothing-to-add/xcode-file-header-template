@@ -49,5 +49,17 @@ struct GeneralSettingsView: View {
 }
 
 #Preview {
-    GeneralSettingsView()
+    @Previewable @State var defaultAuthor = "John Doe"
+    @Previewable @State var defaultOrganization = "My Company"
+    @Previewable @State var defaultSwiftVersion = "6.0"
+    @Previewable @State var autoApplyTemplates = true
+    @Previewable @State var backupBeforeApply = false
+    
+    GeneralSettingsView(
+        defaultAuthor: $defaultAuthor,
+        defaultOrganization: $defaultOrganization,
+        defaultSwiftVersion: $defaultSwiftVersion,
+        autoApplyTemplates: $autoApplyTemplates,
+        backupBeforeApply: $backupBeforeApply
+    )
 }

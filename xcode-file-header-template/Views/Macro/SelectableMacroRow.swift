@@ -64,5 +64,33 @@ struct SelectableMacroRow: View {
 }
 
 #Preview {
-    SelectableMacroRow()
+    VStack(spacing: 8) {
+        SelectableMacroRow(
+            key: "PROJECT_NAME",
+            value: "MyAwesomeProject",
+            isBuiltIn: true,
+            isSelected: false,
+            onEdit: { print("Edit tapped") },
+            onDelete: { print("Delete tapped") }
+        )
+        
+        SelectableMacroRow(
+            key: "CUSTOM_MACRO",
+            value: "This is a custom macro with some longer text to test truncation",
+            isBuiltIn: false,
+            isSelected: true,
+            onEdit: { print("Edit tapped") },
+            onDelete: { print("Delete tapped") }
+        )
+        
+        SelectableMacroRow(
+            key: "FILEHEADER",
+            value: "File Header Template Content",
+            isBuiltIn: true,
+            isSelected: false,
+            onEdit: { print("Edit tapped") },
+            onDelete: { print("Delete tapped") }
+        )
+    }
+    .padding()
 }

@@ -152,4 +152,5 @@ struct MacroSettingsView: View {
 
 #Preview {
     MacroSettingsView()
+        .environmentObject(TemplateManager())
 }

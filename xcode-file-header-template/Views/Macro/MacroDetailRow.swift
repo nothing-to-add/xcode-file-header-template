@@ -46,5 +46,8 @@ struct MacroDetailRow: View {
 }
 
 #Preview {
-    MacroDetailRow()
+    MacroDetailRow(
+        key: "FILEHEADER",
+        value: "//\n//  ___FILENAME___\n//  ___PROJECTNAME___\n//\n//  Created by ___FULLUSERNAME___ on ___DATE___.\n//  Copyright © ___YEAR___ ___ORGANIZATIONNAME___. All rights reserved.\n//"
+    )
 }

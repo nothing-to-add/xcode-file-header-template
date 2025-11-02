@@ -36,5 +36,5 @@ struct EmptyMacrosView: View {
 }
 
 #Preview {
-    EmptyMacrosView()
+    EmptyMacrosView(isGlobal: true)
 }
