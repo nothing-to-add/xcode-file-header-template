@@ -14,7 +14,7 @@ struct TemplateSelectionView: View {
     let templates: [FileHeaderTemplate]
     @Binding var selectedIndex: Int
     let isGlobal: Bool
-    let templateManager: TemplateManager
+    @EnvironmentObject var templateManager: TemplateManager
     @Environment(\.dismiss) private var dismiss
     @State private var previewContent = ""
     
@@ -110,7 +110,7 @@ struct TemplateSelectionView: View {
     TemplateSelectionView(
         templates: FileHeaderTemplate.defaultTemplates,
         selectedIndex: .constant(0),
-        isGlobal: true,
-        templateManager: TemplateManager()
+        isGlobal: true
     )
+    .environmentObject(TemplateManager())
 }

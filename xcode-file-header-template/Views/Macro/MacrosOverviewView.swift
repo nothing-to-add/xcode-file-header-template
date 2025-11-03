@@ -11,9 +11,12 @@
 import SwiftUI
 
 struct MacrosOverviewView: View {
-    let macros: [String: String]
     let isGlobal: Bool
-    let templateManager: TemplateManager
+    @EnvironmentObject var templateManager: TemplateManager
+    
+    private var macros: [String: String] {
+        isGlobal ? templateManager.globalMacros : templateManager.projectMacros
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -69,16 +72,17 @@ struct MacrosOverviewView: View {
 
 
 #Preview {
-    MacrosOverviewView(
-        macros: [
-            "FILEBASENAME": "MyFile",
-            "PROJECTNAME": "xcode-file-header-template",
-            "FULLUSERNAME": "nothing-to-add",
-            "DATE": "03/11/2025",
-            "YEAR": "2025",
-            "ORGANIZATIONNAME": "nothing-to-add"
-        ],
-        isGlobal: true,
-        templateManager: TemplateManager()
-    )
+    let templateManager = TemplateManager()
+    // Add some sample data for preview
+    templateManager.globalMacros = [
+        "FILEBASENAME": "MyFile",
+        "PROJECTNAME": "xcode-file-header-template",
+        "FULLUSERNAME": "nothing-to-add",
+        "DATE": "03/11/2025",
+        "YEAR": "2025",
+        "ORGANIZATIONNAME": "nothing-to-add"
+    ]
+    
+    return MacrosOverviewView(isGlobal: true)
+        .environmentObject(templateManager)
 }

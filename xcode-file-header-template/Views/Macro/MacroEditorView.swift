@@ -13,7 +13,7 @@ import SwiftUI
 struct MacroEditorView: View {
     let macro: IDETemplateMacro?
     let isGlobal: Bool
-    let templateManager: TemplateManager
+    @EnvironmentObject var templateManager: TemplateManager
     
     @Environment(\.dismiss) private var dismiss
     
@@ -202,7 +202,7 @@ struct MacroEditorView: View {
 #Preview {
     MacroEditorView(
         macro: nil,
-        isGlobal: true,
-        templateManager: TemplateManager()
+        isGlobal: true
     )
+    .environmentObject(TemplateManager())
 }

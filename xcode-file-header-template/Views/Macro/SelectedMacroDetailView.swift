@@ -12,10 +12,14 @@ import SwiftUI
 
 struct SelectedMacroDetailView: View {
     let key: String
-    let value: String
     let isGlobal: Bool
-    let templateManager: TemplateManager
+    @EnvironmentObject var templateManager: TemplateManager
     @State private var showingTemplateSelector = false
+    
+    private var value: String {
+        let macros = isGlobal ? templateManager.globalMacros : templateManager.projectMacros
+        return macros[key] ?? ""
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -90,17 +94,15 @@ struct SelectedMacroDetailView: View {
             TemplateSelectionView(
                 templates: FileHeaderTemplate.defaultTemplates,
                 selectedIndex: .constant(0),
-                isGlobal: isGlobal,
-                templateManager: templateManager
+                isGlobal: isGlobal
             )
         }
     }
 }
 
 #Preview {
-    SelectedMacroDetailView(
-        key: "FILEHEADER",
-        value: """
+    let templateManager = TemplateManager()
+    templateManager.globalMacros["FILEHEADER"] = """
 //
 //  ___FILENAME___
 //  ___PROJECTNAME___
@@ -108,8 +110,11 @@ struct SelectedMacroDetailView: View {
 //  Created by ___FULLUSERNAME___ on ___DATE___.
 //  ___COPYRIGHT___
 //
-""",
-        isGlobal: true,
-        templateManager: TemplateManager()
+"""
+    
+    return SelectedMacroDetailView(
+        key: "FILEHEADER",
+        isGlobal: true
     )
+    .environmentObject(templateManager)
 }

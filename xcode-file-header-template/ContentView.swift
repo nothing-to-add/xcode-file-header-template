@@ -103,22 +103,16 @@ struct ContentView: View {
             Group {
                 if let selectedKey = selectedMacroKey {
                     let macros = selectedTab == 0 ? templateManager.globalMacros : templateManager.projectMacros
-                    if let selectedValue = macros[selectedKey] {
+                    if macros[selectedKey] != nil {
                         SelectedMacroDetailView(
                             key: selectedKey,
-                            value: selectedValue,
-                            isGlobal: selectedTab == 0,
-                            templateManager: templateManager
+                            isGlobal: selectedTab == 0
                         )
                     } else {
                         EmptySelectionView(isGlobal: selectedTab == 0)
                     }
                 } else {
-                    MacrosOverviewView(
-                        macros: selectedTab == 0 ? templateManager.globalMacros : templateManager.projectMacros,
-                        isGlobal: selectedTab == 0,
-                        templateManager: templateManager
-                    )
+                    MacrosOverviewView(isGlobal: selectedTab == 0)
                 }
             }
         }
@@ -136,8 +130,7 @@ struct ContentView: View {
         .sheet(isPresented: $showingMacroEditor) {
             MacroEditorView(
                 macro: editingMacro,
-                isGlobal: selectedTab == 0,
-                templateManager: templateManager
+                isGlobal: selectedTab == 0
             )
         }
         .sheet(isPresented: $showingProjectSettings) {
