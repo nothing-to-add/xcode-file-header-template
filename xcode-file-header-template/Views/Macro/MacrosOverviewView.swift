@@ -34,12 +34,33 @@ struct MacrosOverviewView: View {
                         .foregroundColor(isGlobal ? .blue : .green)
                 }
                 
-                Text(isGlobal
-                     ? "~/Library/Developer/Xcode/UserData/IDETemplateMacros.plist"
-                     : "<ProjectPath>/IDETemplateMacros.plist")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .textSelection(.enabled)
+                if isGlobal {
+                    HStack {
+                        Text("~/Library/Developer/Xcode/UserData/IDETemplateMacros.plist")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .textSelection(.enabled)
+                        
+                        Spacer()
+                        
+                        if templateManager.hasRealXcodeAccess {
+                            Label("Connected", systemImage: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.green)
+                        } else {
+                            Button("Grant Access") {
+                                templateManager.requestXcodeAccessWithUserFriendlyPrompt()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
+                    }
+                } else {
+                    Text("<ProjectPath>/IDETemplateMacros.plist")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                }
             }
             
             if macros.isEmpty {

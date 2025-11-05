@@ -26,11 +26,20 @@ struct MacroSettingsView: View {
                         Text("\(templateManager.globalMacros.count)")
                             .foregroundColor(.blue)
                         Spacer()
-                        Button("Open Xcode UserData Folder") {
+                        Button("Select Xcode UserData Folder") {
+                            selectXcodeUserDataFolder()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        
+                        Button("Open Current Folder") {
                             openXcodeUserDataFolder()
                         }
                         .buttonStyle(.bordered)
                     }
+                    
+                    Text("⚠️ Due to App Store sandboxing, please select your Xcode UserData folder manually")
+                        .font(.caption)
+                        .foregroundColor(.orange)
                     
                     Text("Global: ~/Library/Developer/Xcode/UserData/IDETemplateMacros.plist")
                         .font(.caption)
@@ -86,6 +95,13 @@ struct MacroSettingsView: View {
     private func loadGlobalMacros() {
         templateManager.loadGlobalMacros()
         globalMacros = templateManager.globalMacros
+    }
+    
+    private func selectXcodeUserDataFolder() {
+        if templateManager.selectCustomGlobalMacrosLocation() {
+            templateManager.loadGlobalMacros()
+            loadGlobalMacros()
+        }
     }
     
     private func openXcodeUserDataFolder() {
