@@ -106,42 +106,55 @@ struct MacroEditorView: View {
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                         }
                         
-                        // Xcode Placeholders Help
-                        if key == "FILEHEADER" {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Available Xcode placeholders:")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.secondary)
-                                
-                                let placeholders = [
-                                    ("___FILENAME___", "Name of the file being created"),
-                                    ("___PROJECTNAME___", "Name of the current project"),
-                                    ("___FULLUSERNAME___", "Full name of the user"),
-                                    ("___DATE___", "Current date"),
-                                    ("___COPYRIGHT___", "Copyright notice"),
-                                    ("___ORGANIZATIONNAME___", "Organization name")
-                                ]
-                                
-                                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 2) {
-                                    ForEach(placeholders, id: \.0) { placeholder, description in
-                                        HStack {
-                                            Text(placeholder)
-                                                .font(.system(.caption, design: .monospaced))
-                                                .foregroundColor(.blue)
-                                            
-                                            Text("- \(description)")
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                            
-                                            Spacer()
+                        // Template Key Information
+                        VStack(alignment: .leading, spacing: 8) {
+                            if let templateKey = TemplateKeys(rawValue: key) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("About \(templateKey.displayName):")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.secondary)
+                                    
+                                    Text(templateKey.description)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(8)
+                                .background(Color.blue.opacity(0.05))
+                                .cornerRadius(6)
+                            }
+                            
+                            // Xcode Placeholders Help (for FILEHEADER only)
+                            if key == "FILEHEADER" {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Available Xcode placeholders:")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.secondary)
+                                    
+                                    ScrollView {
+                                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 2) {
+                                            ForEach(TemplateKeys.allCases.filter { $0 != .fileHeader }, id: \.id) { templateKey in
+                                                HStack {
+                                                    Text("___\(templateKey.rawValue)___")
+                                                        .font(.system(.caption2, design: .monospaced))
+                                                        .foregroundColor(.blue)
+                                                    
+                                                    Text("- \(templateKey.displayName)")
+                                                        .font(.caption2)
+                                                        .foregroundColor(.secondary)
+                                                    
+                                                    Spacer()
+                                                }
+                                            }
                                         }
                                     }
+                                    .frame(maxHeight: 150)
                                 }
+                                .padding(8)
+                                .background(Color.green.opacity(0.05))
+                                .cornerRadius(6)
                             }
-                            .padding(8)
-                            .background(Color.blue.opacity(0.05))
-                            .cornerRadius(6)
                         }
                     }
                 }

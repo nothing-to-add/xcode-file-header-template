@@ -35,15 +35,8 @@ class TemplateManager: ObservableObject {
             .appendingPathComponent("UserData")
             .appendingPathComponent("IDETemplateMacros.plist")
         
-        // Common Xcode template macro keys
-        self.availableTemplateKeys = [
-            "FILEHEADER",
-            "FULLUSERNAME", 
-            "COPYRIGHT",
-            "ORGANIZATIONNAME",
-            "PROJECTNAME",
-            "CLASSPREFIX"
-        ]
+        // Initialize with all available template keys from the enum
+        self.availableTemplateKeys = TemplateKeys.allKeys
         
         createXcodeUserDataDirectoryIfNeeded()
         loadGlobalMacros()
@@ -184,6 +177,42 @@ class TemplateManager: ObservableObject {
         saveProjectMacros()
     }
     
+    // MARK: - Template Keys Helper Methods
+    
+    /// Get description for a template key
+    func getTemplateKeyDescription(for key: String) -> String {
+        if let templateKey = TemplateKeys(rawValue: key) {
+            return templateKey.description
+        }
+        return "Custom template macro"
+    }
+    
+    /// Get display name for a template key
+    func getTemplateKeyDisplayName(for key: String) -> String {
+        if let templateKey = TemplateKeys(rawValue: key) {
+            return templateKey.displayName
+        }
+        return key
+    }
+    
+    /// Get category for a template key
+    func getTemplateKeyCategory(for key: String) -> TemplateKeyCategory? {
+        if let templateKey = TemplateKeys(rawValue: key) {
+            return templateKey.category
+        }
+        return nil
+    }
+    
+    /// Get all template keys grouped by category
+    func getTemplateKeysGroupedByCategory() -> [TemplateKeyCategory: [TemplateKeys]] {
+        return TemplateKeys.groupedByCategory
+    }
+    
+    /// Check if a template key is a built-in Xcode key
+    func isBuiltInTemplateKey(_ key: String) -> Bool {
+        return TemplateKeys(rawValue: key) != nil
+    }
+    
     func createProjectMacrosFile() {
         guard !currentProjectPath.isEmpty else { return }
         
@@ -220,11 +249,31 @@ class TemplateManager: ObservableObject {
         
         // Replace Xcode built-in placeholders with preview values
         header = header.replacingOccurrences(of: "___FILENAME___", with: "ExampleFile.swift")
+        header = header.replacingOccurrences(of: "___FILEBASENAME___", with: "ExampleFile")
+        header = header.replacingOccurrences(of: "___FILEBASENAMEASIDENTIFIER___", with: "ExampleFile")
         header = header.replacingOccurrences(of: "___PROJECTNAME___", with: resolvedMacros["PROJECTNAME"] ?? "MyProject")
+        header = header.replacingOccurrences(of: "___PRODUCTNAME___", with: resolvedMacros["PRODUCTNAME"] ?? "MyProject")
+        header = header.replacingOccurrences(of: "___WORKSPACENAME___", with: resolvedMacros["WORKSPACENAME"] ?? "MyProject")
         header = header.replacingOccurrences(of: "___FULLUSERNAME___", with: resolvedMacros["FULLUSERNAME"] ?? NSFullUserName())
+        header = header.replacingOccurrences(of: "___USERNAME___", with: resolvedMacros["USERNAME"] ?? NSUserName())
         header = header.replacingOccurrences(of: "___DATE___", with: DateFormatter.shortDateFormatter.string(from: Date()))
+        header = header.replacingOccurrences(of: "___TIME___", with: DateFormatter.timeFormatter.string(from: Date()))
+        header = header.replacingOccurrences(of: "___YEAR___", with: "\(Calendar.current.component(.year, from: Date()))")
+        header = header.replacingOccurrences(of: "___MONTH___", with: "\(Calendar.current.component(.month, from: Date()))")
+        header = header.replacingOccurrences(of: "___DAY___", with: "\(Calendar.current.component(.day, from: Date()))")
         header = header.replacingOccurrences(of: "___COPYRIGHT___", with: resolvedMacros["COPYRIGHT"] ?? "")
         header = header.replacingOccurrences(of: "___ORGANIZATIONNAME___", with: resolvedMacros["ORGANIZATIONNAME"] ?? "")
+        header = header.replacingOccurrences(of: "___CLASSPREFIX___", with: resolvedMacros["CLASSPREFIX"] ?? "")
+        header = header.replacingOccurrences(of: "___PACKAGENAME___", with: resolvedMacros["PACKAGENAME"] ?? "MyPackage")
+        header = header.replacingOccurrences(of: "___TARGETNAME___", with: resolvedMacros["TARGETNAME"] ?? "MyTarget")
+        header = header.replacingOccurrences(of: "___SWIFTVERSION___", with: resolvedMacros["SWIFTVERSION"] ?? "6.0")
+        header = header.replacingOccurrences(of: "___VERSION___", with: resolvedMacros["VERSION"] ?? "1.0")
+        header = header.replacingOccurrences(of: "___BUILD___", with: resolvedMacros["BUILD"] ?? "1")
+        header = header.replacingOccurrences(of: "___PLATFORM___", with: resolvedMacros["PLATFORM"] ?? "macOS")
+        header = header.replacingOccurrences(of: "___XCODEVERSION___", with: resolvedMacros["XCODEVERSION"] ?? "15.0")
+        header = header.replacingOccurrences(of: "___DEPLOYMENTTARGET___", with: resolvedMacros["DEPLOYMENTTARGET"] ?? "14.0")
+        header = header.replacingOccurrences(of: "___COMPANYIDENTIFIER___", with: resolvedMacros["COMPANYIDENTIFIER"] ?? "com.example")
+        header = header.replacingOccurrences(of: "___DEVELOPMENTTEAM___", with: resolvedMacros["DEVELOPMENTTEAM"] ?? "TEAM123")
         
         return header
     }

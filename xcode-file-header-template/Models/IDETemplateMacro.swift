@@ -26,22 +26,10 @@ struct IDETemplateMacro: Identifiable, Equatable, Hashable {
     }
     
     static func getDescription(for key: String) -> String {
-        switch key {
-        case "FILEHEADER":
-            return "The header template for new files"
-        case "FULLUSERNAME":
-            return "The full name of the user"
-        case "COPYRIGHT":
-            return "Copyright notice"
-        case "ORGANIZATIONNAME":
-            return "Organization or company name"
-        case "PROJECTNAME":
-            return "Name of the current project"
-        case "CLASSPREFIX":
-            return "Prefix for new class names"
-        default:
-            return "Custom template macro"
+        if let templateKey = TemplateKeys(rawValue: key) {
+            return templateKey.description
         }
+        return "Custom template macro"
     }
     
     var isFileHeaderMacro: Bool {
