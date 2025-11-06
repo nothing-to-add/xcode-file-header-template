@@ -58,10 +58,3 @@ struct MenuCommands: Commands {
         }
     }
 }
-
-extension Notification.Name {
-    static let showTemplateEditor = Notification.Name("showTemplateEditor")
-    static let showGlobalTemplates = Notification.Name("showGlobalTemplates")
-    static let showProjectSettings = Notification.Name("showProjectSettings")
-    static let showFileProcessor = Notification.Name("showFileProcessor")
-}

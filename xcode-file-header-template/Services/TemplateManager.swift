@@ -257,7 +257,7 @@ class TemplateManager: ObservableObject {
         header = header.replacingOccurrences(of: "___FULLUSERNAME___", with: resolvedMacros["FULLUSERNAME"] ?? NSFullUserName())
         header = header.replacingOccurrences(of: "___USERNAME___", with: resolvedMacros["USERNAME"] ?? NSUserName())
         header = header.replacingOccurrences(of: "___DATE___", with: DateFormatter.shortDateFormatter.string(from: Date()))
-        header = header.replacingOccurrences(of: "___TIME___", with: DateFormatter.timeFormatter.string(from: Date()))
+        header = header.replacingOccurrences(of: "___TIME___", with: DateFormatter.shortDateFormatter.string(from: Date()))
         header = header.replacingOccurrences(of: "___YEAR___", with: "\(Calendar.current.component(.year, from: Date()))")
         header = header.replacingOccurrences(of: "___MONTH___", with: "\(Calendar.current.component(.month, from: Date()))")
         header = header.replacingOccurrences(of: "___DAY___", with: "\(Calendar.current.component(.day, from: Date()))")

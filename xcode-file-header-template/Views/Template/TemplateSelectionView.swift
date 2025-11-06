@@ -74,7 +74,7 @@ struct TemplateSelectionView: View {
         .onAppear {
             updatePreview()
         }
-        .onChange(of: selectedIndex) { _ in
+        .onChange(of: selectedIndex) {
             updatePreview()
         }
         .frame(minWidth: 700, minHeight: 500)

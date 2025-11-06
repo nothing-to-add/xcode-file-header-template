@@ -10,7 +10,7 @@ import SwiftUI
 struct AboutView: View {
     var body: some View {
         VStack(spacing: 20) {
-            Image(systemName: "doc.text.badge.plus")
+            Image(systemName: "doc.badge.plus")
                 .font(.system(size: 64))
                 .foregroundColor(.accentColor)
             

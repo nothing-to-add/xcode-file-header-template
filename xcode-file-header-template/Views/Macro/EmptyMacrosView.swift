@@ -15,7 +15,7 @@ struct EmptyMacrosView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Image(systemName: isGlobal ? "doc.text.badge.plus" : "folder.badge.plus")
+            Image(systemName: isGlobal ? "doc.badge.plus" : "folder.badge.plus")
                 .font(.system(size: 60))
                 .foregroundColor(.secondary)
             
@@ -35,6 +35,10 @@ struct EmptyMacrosView: View {
     }
 }
 
-#Preview {
+#Preview("Global Macros") {
     EmptyMacrosView(isGlobal: true)
+}
+
+#Preview("Project Macros") {
+    EmptyMacrosView(isGlobal: false)
 }

@@ -25,98 +25,28 @@ struct ContentView: View {
             // Sidebar
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                VStack(alignment: .leading) {
-                    Text("IDETemplateMacros Manager")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Text("Manage Xcode's IDETemplateMacros.plist files")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal)
+                header
                 
                 // Tab Selection
-                Picker("Scope", selection: $selectedTab) {
-                    Text("Global Macros").tag(0)
-                    Text("Project Macros").tag(1)
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal)
+                tabSelection
                 
                 // Macro List
-                List(selection: $selectedMacroKey) {
-                    if selectedTab == 0 {
-                        globalMacrosSection
-                    } else {
-                        projectMacrosSection
-                    }
-                }
-                .listStyle(SidebarListStyle())
+                macroList
                 
                 // Action Buttons
-                HStack {
-                    Button("Add Macro") {
-                        editingMacro = nil
-                        showingMacroEditor = true
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    if selectedTab == 1 {
-                        Button("Project Settings") {
-                            showingProjectSettings = true
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                }
-                .padding(.horizontal)
+                actionButtons
                 
                 if selectedTab == 1 {
                     // Project Selector
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Current Project:")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        HStack {
-                            if selectedProjectPath.isEmpty {
-                                Text("No project selected")
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text(URL(fileURLWithPath: selectedProjectPath).lastPathComponent)
-                                    .font(.caption)
-                            }
-                            
-                            Spacer()
-                            
-                            Button("Select") {
-                                showingProjectSettings = true
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                    }
-                    .padding(.horizontal)
+                    projectSelector
                 }
             }
             .frame(minWidth: 300, maxWidth: 350)
             
             // Main Content
-            Group {
-                if let selectedKey = selectedMacroKey {
-                    let macros = selectedTab == 0 ? templateManager.globalMacros : templateManager.projectMacros
-                    if macros[selectedKey] != nil {
-                        SelectedMacroDetailView(
-                            key: selectedKey,
-                            isGlobal: selectedTab == 0
-                        )
-                    } else {
-                        EmptySelectionView(isGlobal: selectedTab == 0)
-                    }
-                } else {
-                    MacrosOverviewView(isGlobal: selectedTab == 0)
-                }
-            }
+            mainContent
         }
-        .navigationTitle("IDETemplateMacros")
+        .navigationTitle("Xcode Template Macros")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -143,25 +73,124 @@ struct ContentView: View {
             SettingsView()
                 .environmentObject(templateManager)
         }
-        .onChange(of: selectedProjectPath) { newPath in
+        .onChange(of: selectedProjectPath) { _, newPath in
             if !newPath.isEmpty {
                 templateManager.loadProjectMacros(for: newPath)
             }
         }
     }
     
-    private var globalMacrosSection: some View {
-        ForEach(Array(templateManager.globalMacros.keys.sorted()), id: \.self) { key in
+    private var header: some View {
+        VStack(alignment: .leading) {
+            Text("Xcode Template Macros Manager")
+                .font(.title2)
+                .fontWeight(.bold)
+            Text("Manage Xcode's IDETemplateMacros.plist files")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal)
+    }
+    
+    private var tabSelection: some View {
+        Picker("Scope", selection: $selectedTab) {
+            Text("Global Macros").tag(0)
+            Text("Project Macros").tag(1)
+        }
+        .pickerStyle(SegmentedPickerStyle())
+        .padding(.horizontal)
+    }
+    
+    private var macroList: some View {
+        List(selection: $selectedMacroKey) {
+            if selectedTab == 0 {
+                globalMacrosSection
+            } else {
+                projectMacrosSection
+            }
+        }
+        .listStyle(SidebarListStyle())
+    }
+    
+    private var actionButtons: some View {
+        HStack {
+            Button("Add Macro") {
+                editingMacro = nil
+                showingMacroEditor = true
+            }
+            .buttonStyle(.bordered)
+            
+            if selectedTab == 1 {
+                Button("Project Settings") {
+                    showingProjectSettings = true
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.bottom)
+    }
+    
+    private var projectSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Current Project:")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            HStack {
+                if selectedProjectPath.isEmpty {
+                    Text("No project selected")
+                        .foregroundColor(.secondary)
+                } else {
+                    Text(URL(fileURLWithPath: selectedProjectPath).lastPathComponent)
+                        .font(.caption)
+                }
+                
+                Spacer()
+                
+                Button("Select") {
+                    showingProjectSettings = true
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding(.horizontal)
+    }
+    
+    private var mainContent: some View {
+        Group {
+            if let selectedKey = selectedMacroKey {
+                let macros = selectedTab == 0 ? templateManager.globalMacros : templateManager.projectMacros
+                if macros[selectedKey] != nil {
+                    SelectedMacroDetailView(
+                        key: selectedKey,
+                        isGlobal: selectedTab == 0
+                    )
+                } else {
+                    EmptySelectionView(isGlobal: selectedTab == 0)
+                }
+            } else {
+                MacrosOverviewView(isGlobal: selectedTab == 0)
+            }
+        }
+    }
+    
+    private func macroSection(
+        macros: [String: String],
+        isGlobal: Bool,
+        deleteMacro: @escaping (String) -> Void
+    ) -> some View {
+        ForEach(Array(macros.keys.sorted()), id: \.self) { key in
             SelectableMacroRow(
                 key: key,
-                value: templateManager.globalMacros[key] ?? "",
-                isBuiltIn: IDETemplateMacro.builtInMacros.contains { $0.key == key },
+                value: macros[key] ?? "",
+                isBuiltIn: isGlobal && IDETemplateMacro.builtInMacros.contains { $0.key == key },
                 isSelected: selectedMacroKey == key
             ) {
-                editingMacro = IDETemplateMacro(key: key, value: templateManager.globalMacros[key] ?? "")
+                editingMacro = IDETemplateMacro(key: key, value: macros[key] ?? "")
                 showingMacroEditor = true
             } onDelete: {
-                templateManager.deleteGlobalMacro(key: key)
+                deleteMacro(key)
                 if selectedMacroKey == key {
                     selectedMacroKey = nil
                 }
@@ -170,24 +199,20 @@ struct ContentView: View {
         }
     }
     
+    private var globalMacrosSection: some View {
+        macroSection(
+            macros: templateManager.globalMacros,
+            isGlobal: true,
+            deleteMacro: templateManager.deleteGlobalMacro
+        )
+    }
+    
     private var projectMacrosSection: some View {
-        ForEach(Array(templateManager.projectMacros.keys.sorted()), id: \.self) { key in
-            SelectableMacroRow(
-                key: key,
-                value: templateManager.projectMacros[key] ?? "",
-                isBuiltIn: false,
-                isSelected: selectedMacroKey == key
-            ) {
-                editingMacro = IDETemplateMacro(key: key, value: templateManager.projectMacros[key] ?? "")
-                showingMacroEditor = true
-            } onDelete: {
-                templateManager.deleteProjectMacro(key: key)
-                if selectedMacroKey == key {
-                    selectedMacroKey = nil
-                }
-            }
-            .tag(key)
-        }
+        macroSection(
+            macros: templateManager.projectMacros,
+            isGlobal: false,
+            deleteMacro: templateManager.deleteProjectMacro
+        )
     }
 }
 

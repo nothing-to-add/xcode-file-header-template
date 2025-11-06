@@ -33,6 +33,10 @@ struct EmptySelectionView: View {
     }
 }
 
-#Preview {
+#Preview("Global Macros") {
+    EmptySelectionView(isGlobal: true)
+}
+
+#Preview("Project Macros") {
     EmptySelectionView(isGlobal: false)
 }

@@ -195,7 +195,7 @@ struct MacroEditorView: View {
             }
         }
         .onAppear {
-            if let macro = macro {
+            if let macro {
                 key = macro.key
                 value = macro.value
                 isEditingExisting = true
