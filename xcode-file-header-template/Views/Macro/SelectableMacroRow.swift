@@ -46,16 +46,31 @@ struct SelectableMacroRow: View {
             
             Spacer()
             
-            Menu {
-                Button("Edit") { onEdit() }
-                if !isBuiltIn {
-                    Button("Delete", role: .destructive) { onDelete() }
+            HStack(spacing: 8) {
+                Button {
+                    onEdit()
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(isSelected ? .white : .secondary)
+                        .frame(width: 24, height: 24)
                 }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+                .buttonStyle(.plain)
+                .help("Edit")
+                
+                if !isBuiltIn {
+                    Button {
+                        onDelete()
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(isSelected ? .white : .red)
+                            .frame(width: 24, height: 24)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Delete")
+                }
             }
-            .menuStyle(BorderlessButtonMenuStyle())
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
