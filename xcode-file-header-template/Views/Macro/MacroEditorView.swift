@@ -26,152 +26,22 @@ struct MacroEditorView: View {
         NavigationView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(isEditingExisting ? "Edit Template Macro" : "Add Template Macro")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text(isGlobal ? "Global IDETemplateMacros.plist" : "Project IDETemplateMacros.plist")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                header
                 
                 // Key Field
-                GroupBox("Macro Key") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        TextField("Enter macro key (e.g., FILEHEADER, ORGANIZATIONNAME)", text: $key)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .disabled(isEditingExisting)
-                        
-                        if key == "FILEHEADER" {
-                            Text("This macro defines the file header template that Xcode uses for new files")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                }
+                keyField
                 
                 // Template Presets (for FILEHEADER)
                 if key == "FILEHEADER" {
-                    GroupBox("Template Presets") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Choose a preset template or create custom:")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                                ForEach(FileHeaderTemplate.defaultTemplates) { template in
-                                    Button {
-                                        selectedTemplate = template
-                                        value = template.content
-                                    } label: {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(template.name)
-                                                .font(.headline)
-                                                .foregroundColor(.primary)
-                                            
-                                            Text(template.description)
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                                .multilineTextAlignment(.leading)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(8)
-                                        .background(selectedTemplate?.id == template.id ? Color.accentColor.opacity(0.1) : Color(NSColor.controlBackgroundColor))
-                                        .cornerRadius(8)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                }
-                            }
-                        }
-                    }
+                    templatePresets
                 }
                 
                 // Value Field
-                GroupBox("Macro Value") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if key == "FILEHEADER" {
-                            Text("File Header Template:")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            TextEditor(text: $value)
-                                .font(.system(.body, design: .monospaced))
-                                .frame(minHeight: 200)
-                                .padding(4)
-                                .background(Color(NSColor.textBackgroundColor))
-                                .cornerRadius(6)
-                        } else {
-                            TextField("Enter macro value", text: $value)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                        }
-                        
-                        // Template Key Information
-                        VStack(alignment: .leading, spacing: 8) {
-                            if let templateKey = TemplateKeys(rawValue: key) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("About \(templateKey.displayName):")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.secondary)
-                                    
-                                    Text(templateKey.description)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(8)
-                                .background(Color.blue.opacity(0.05))
-                                .cornerRadius(6)
-                            }
-                            
-                            // Xcode Placeholders Help (for FILEHEADER only)
-                            if key == "FILEHEADER" {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Available Xcode placeholders:")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.secondary)
-                                    
-                                    ScrollView {
-                                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 2) {
-                                            ForEach(TemplateKeys.allCases.filter { $0 != .fileHeader }, id: \.id) { templateKey in
-                                                HStack {
-                                                    Text("___\(templateKey.rawValue)___")
-                                                        .font(.system(.caption2, design: .monospaced))
-                                                        .foregroundColor(.blue)
-                                                    
-                                                    Text("- \(templateKey.displayName)")
-                                                        .font(.caption2)
-                                                        .foregroundColor(.secondary)
-                                                    
-                                                    Spacer()
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .frame(maxHeight: 150)
-                                }
-                                .padding(8)
-                                .background(Color.green.opacity(0.05))
-                                .cornerRadius(6)
-                            }
-                        }
-                    }
-                }
+                valueFields
                 
                 // Preview
                 if key == "FILEHEADER" && !value.isEmpty {
-                    GroupBox("Preview") {
-                        ScrollView {
-                            Text(value.replacingXcodePlaceholders())
-                                .font(.system(.body, design: .monospaced))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                        }
-                        .background(Color(NSColor.textBackgroundColor))
-                        .cornerRadius(8)
-                        .frame(height: 150)
-                    }
+                    preview
                 }
                 
                 Spacer()
@@ -200,6 +70,156 @@ struct MacroEditorView: View {
                 value = macro.value
                 isEditingExisting = true
             }
+        }
+    }
+    
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(isEditingExisting ? "Edit Template Macro" : "Add Template Macro")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(isGlobal ? "Global IDETemplateMacros.plist" : "Project IDETemplateMacros.plist")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var keyField: some View {
+        GroupBox("Macro Key") {
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("Enter macro key (e.g., FILEHEADER, ORGANIZATIONNAME)", text: $key)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .disabled(isEditingExisting)
+                
+                if key == "FILEHEADER" {
+                    Text("This macro defines the file header template that Xcode uses for new files")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
+            }
+        }
+    }
+    
+    private var templatePresets: some View {
+        GroupBox("Template Presets") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Choose a preset template or create custom:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
+                    ForEach(FileHeaderTemplate.defaultTemplates) { template in
+                        Button {
+                            selectedTemplate = template
+                            value = template.content
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(template.name)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text(template.description)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(8)
+                            .background(selectedTemplate?.id == template.id ? Color.accentColor.opacity(0.1) : Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+            }
+        }
+    }
+    
+    private var valueFields: some View {
+        GroupBox("Macro Value") {
+            VStack(alignment: .leading, spacing: 8) {
+                if key == "FILEHEADER" {
+                    Text("File Header Template:")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    TextEditor(text: $value)
+                        .font(.system(.body, design: .monospaced))
+                        .frame(minHeight: 200)
+                        .padding(4)
+                        .background(Color(NSColor.textBackgroundColor))
+                        .cornerRadius(6)
+                } else {
+                    TextField("Enter macro value", text: $value)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                // Template Key Information
+                VStack(alignment: .leading, spacing: 8) {
+                    if let templateKey = TemplateKeys(rawValue: key) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("About \(templateKey.displayName):")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.secondary)
+                            
+                            Text(templateKey.description)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(8)
+                        .background(Color.blue.opacity(0.05))
+                        .cornerRadius(6)
+                    }
+                    
+                    // Xcode Placeholders Help (for FILEHEADER only)
+                    if key == "FILEHEADER" {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Available Xcode placeholders:")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.secondary)
+                            
+                            ScrollView {
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 2) {
+                                    ForEach(TemplateKeys.allCases.filter { $0 != .fileHeader }, id: \.id) { templateKey in
+                                        HStack {
+                                            Text("___\(templateKey.rawValue)___")
+                                                .font(.system(.caption2, design: .monospaced))
+                                                .foregroundColor(.blue)
+                                            
+                                            Text("- \(templateKey.displayName)")
+                                                .font(.caption2)
+                                                .foregroundColor(.secondary)
+                                            
+                                            Spacer()
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxHeight: 150)
+                        }
+                        .padding(8)
+                        .background(Color.green.opacity(0.05))
+                        .cornerRadius(6)
+                    }
+                }
+            }
+        }
+    }
+    
+    private var preview: some View {
+        GroupBox("Preview") {
+            ScrollView {
+                Text(value.replacingXcodePlaceholders())
+                    .font(.system(.body, design: .monospaced))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .background(Color(NSColor.textBackgroundColor))
+            .cornerRadius(8)
+            .frame(height: 150)
         }
     }
     
