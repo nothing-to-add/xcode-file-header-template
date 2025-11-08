@@ -13,6 +13,13 @@ import SwiftUI
 struct MacroSummaryCard: View {
     let key: String
     let value: String
+    let onTap: (() -> Void)?
+    
+    init(key: String, value: String, onTap: (() -> Void)? = nil) {
+        self.key = key
+        self.value = value
+        self.onTap = onTap
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -32,15 +39,27 @@ struct MacroSummaryCard: View {
         .padding(12)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(8)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?()
+        }
     }
 }
 
 #Preview {
     VStack(spacing: 16) {
-        MacroSummaryCard(key: "FILEHEADER", value: "Example file header template content")
-        MacroSummaryCard(key: "PROJECTNAME", value: "xcode-file-header-template")
-        MacroSummaryCard(key: "FILENAME", value: "MacroSummaryCard.swift")
-        MacroSummaryCard(key: "AUTHOR", value: "nothing-to-add")
+        MacroSummaryCard(key: "FILEHEADER", value: "Example file header template content") {
+            print("FILEHEADER tapped")
+        }
+        MacroSummaryCard(key: "PROJECTNAME", value: "xcode-file-header-template") {
+            print("PROJECTNAME tapped")
+        }
+        MacroSummaryCard(key: "FILENAME", value: "MacroSummaryCard.swift") {
+            print("FILENAME tapped")
+        }
+        MacroSummaryCard(key: "AUTHOR", value: "nothing-to-add") {
+            print("AUTHOR tapped")
+        }
     }
     .padding()
 }

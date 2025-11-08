@@ -13,6 +13,9 @@ import SwiftUI
 struct MacrosOverviewView: View {
     let isGlobal: Bool
     @EnvironmentObject var templateManager: TemplateManager
+    @State private var showingMacroEditor = false
+    @State private var selectedMacroKey: String = ""
+    @State private var selectedMacroValue: String = ""
     
     private var macros: [String: String] {
         isGlobal ? templateManager.globalMacros : templateManager.projectMacros
@@ -77,7 +80,14 @@ struct MacrosOverviewView: View {
                             GridItem(.flexible())
                         ], spacing: 12) {
                             ForEach(Array(macros.keys.sorted()), id: \.self) { key in
-                                MacroSummaryCard(key: key, value: macros[key] ?? "")
+                                MacroSummaryCard(
+                                    key: key,
+                                    value: macros[key] ?? ""
+                                ) {
+                                    selectedMacroKey = key
+                                    selectedMacroValue = macros[key] ?? ""
+                                    showingMacroEditor = true
+                                }
                             }
                         }
                         .padding()
@@ -88,6 +98,13 @@ struct MacrosOverviewView: View {
             Spacer()
         }
         .padding()
+        .sheet(isPresented: $showingMacroEditor) {
+            MacroEditorView(
+                macro: IDETemplateMacro(key: selectedMacroKey, value: selectedMacroValue),
+                isGlobal: isGlobal
+            )
+            .environmentObject(templateManager)
+        }
     }
 }
 
