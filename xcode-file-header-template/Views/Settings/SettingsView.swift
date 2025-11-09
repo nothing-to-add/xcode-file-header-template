@@ -21,7 +21,27 @@ struct SettingsView: View {
     @AppStorage("backupBeforeApply") private var backupBeforeApply = true
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            // Custom Header
+            HStack {
+                Spacer()
+                
+                Text("Settings")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                Button("Done") {
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+            .background(.regularMaterial)
+            
+            Divider()
+            
             TabView {
                 GeneralSettingsView(
                     defaultAuthor: $defaultAuthor,
@@ -44,14 +64,6 @@ struct SettingsView: View {
                     .tabItem {
                         Label("About", systemImage: "info.circle")
                     }
-            }
-        }
-        .navigationTitle("Settings")
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done") {
-                    dismiss()
-                }
             }
         }
         .frame(width: 500, height: 400)

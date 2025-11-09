@@ -23,45 +23,56 @@ struct MacroEditorView: View {
     @State private var isEditingExisting: Bool = false
     
     var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                header
-                
-                // Key Field
-                keyField
-                
-                // Template Presets (for FILEHEADER)
-                if key == "FILEHEADER" {
-                    templatePresets
-                }
-                
-                // Value Field
-                valueFields
-                
-                // Preview
-                if key == "FILEHEADER" && !value.isEmpty {
-                    preview
-                }
-                
-                Spacer()
-            }
-            .padding()
-        }
-        .navigationTitle(isEditingExisting ? "Edit Macro" : "Add Macro")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
+        VStack(spacing: 0) {
+            // Custom Header with buttons
+            HStack {
                 Button("Cancel") {
                     dismiss()
                 }
-            }
-            
-            ToolbarItem(placement: .confirmationAction) {
+                
+                Spacer()
+                
+                Text(isEditingExisting ? "Edit Macro" : "Add Macro")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
                 Button("Save") {
                     saveMacro()
                     dismiss()
                 }
                 .disabled(key.isEmpty || value.isEmpty)
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+            .background(.regularMaterial)
+            
+            Divider()
+            
+            // Content
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header
+                    header
+                    
+                    // Key Field
+                    keyField
+                    
+                    // Template Presets (for FILEHEADER)
+                    if key == "FILEHEADER" {
+                        templatePresets
+                    }
+                    
+                    // Value Field
+                    valueFields
+                    
+                    // Preview
+                    if key == "FILEHEADER" && !value.isEmpty {
+                        preview
+                    }
+                }
+                .padding()
             }
         }
         .onAppear {

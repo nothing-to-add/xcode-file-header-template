@@ -104,6 +104,8 @@ struct MacrosOverviewView: View {
                 isGlobal: isGlobal
             )
             .environmentObject(templateManager)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
     }
 }

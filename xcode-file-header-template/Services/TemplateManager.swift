@@ -61,7 +61,6 @@ class TemplateManager: ObservableObject {
         // Try to load from custom location first
         _ = loadCustomGlobalMacrosLocation()
         
-        Logger.shared.info("Global IDE Template Macros url: \(effectiveGlobalMacrosURL.path)")
         do {
             let data = try Data(contentsOf: effectiveGlobalMacrosURL)
             if let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {

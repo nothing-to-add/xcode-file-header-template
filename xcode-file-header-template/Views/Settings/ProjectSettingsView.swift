@@ -23,18 +23,39 @@ struct ProjectSettingsView: View {
     @State private var hasExistingMacros = false
     
     var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Project IDETemplateMacros")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("Configure project-specific template macros that override global settings")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+        VStack(spacing: 0) {
+            // Custom Header
+            HStack {
+                Spacer()
+                
+                Text("Project Settings")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                Button("Done") {
+                    dismiss()
                 }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+            .background(.regularMaterial)
+            
+            Divider()
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Project IDETemplateMacros")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        Text("Configure project-specific template macros that override global settings")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 
                 // Project Selection
                 GroupBox("Project Selection") {
@@ -142,17 +163,8 @@ struct ProjectSettingsView: View {
                             .foregroundColor(.blue)
                     }
                 }
-                
-                Spacer()
-            }
-            .padding()
-        }
-        .navigationTitle("Project Settings")
-        .toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Done") {
-                    dismiss()
                 }
+                .padding()
             }
         }
         .fileImporter(

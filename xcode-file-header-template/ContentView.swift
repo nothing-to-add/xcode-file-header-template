@@ -57,26 +57,34 @@ struct ContentView: View {
                 .help("Settings")
             }
         }
+        .onChange(of: selectedProjectPath) { _, newPath in
+            if !newPath.isEmpty {
+                templateManager.loadProjectMacros(for: newPath)
+            }
+        }
+        // Move all sheet presentations outside of NavigationView scope
         .sheet(isPresented: $showingMacroEditor) {
             MacroEditorView(
                 macro: editingMacro,
                 isGlobal: selectedTab == 0
             )
+            .environmentObject(templateManager)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingProjectSettings) {
             ProjectSettingsView(
                 templateManager: templateManager,
                 selectedProjectPath: $selectedProjectPath
             )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
                 .environmentObject(templateManager)
-        }
-        .onChange(of: selectedProjectPath) { _, newPath in
-            if !newPath.isEmpty {
-                templateManager.loadProjectMacros(for: newPath)
-            }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
     
