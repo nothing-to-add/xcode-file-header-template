@@ -59,16 +59,14 @@ struct MacroEditorView: View {
                     // Key Field
                     keyField
                     
-                    // Template Presets (for FILEHEADER)
-                    if key == "FILEHEADER" {
-                        templatePresets
-                    }
+                    // Template Presets]
+                    templatePresets
                     
                     // Value Field
                     valueFields
                     
                     // Preview
-                    if key == "FILEHEADER" && !value.isEmpty {
+                    if !value.isEmpty {
                         preview
                     }
                 }
@@ -97,17 +95,11 @@ struct MacroEditorView: View {
     }
     
     private var keyField: some View {
-        GroupBox("Macro Key") {
+        GroupBox("Macro Name") {
             VStack(alignment: .leading, spacing: 8) {
-                TextField("Enter macro key (e.g., FILEHEADER, ORGANIZATIONNAME)", text: $key)
+                TextField("Enter macro name (e.g., FILEHEADER, ORGANIZATIONNAME)", text: $key)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .disabled(isEditingExisting)
-                
-                if key == "FILEHEADER" {
-                    Text("This macro defines the file header template that Xcode uses for new files")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                }
             }
         }
     }
@@ -148,9 +140,8 @@ struct MacroEditorView: View {
     }
     
     private var valueFields: some View {
-        GroupBox("Macro Value") {
+        GroupBox("Macro Text") {
             VStack(alignment: .leading, spacing: 8) {
-                if key == "FILEHEADER" {
                     Text("File Header Template:")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -161,10 +152,6 @@ struct MacroEditorView: View {
                         .padding(4)
                         .background(Color(NSColor.textBackgroundColor))
                         .cornerRadius(6)
-                } else {
-                    TextField("Enter macro value", text: $value)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                }
                 
                 // Template Key Information
                 VStack(alignment: .leading, spacing: 8) {
@@ -184,8 +171,7 @@ struct MacroEditorView: View {
                         .cornerRadius(6)
                     }
                     
-                    // Xcode Placeholders Help (for FILEHEADER only)
-                    if key == "FILEHEADER" {
+                    // Xcode Placeholders Help
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Available Xcode placeholders:")
                                 .font(.caption)
@@ -214,7 +200,6 @@ struct MacroEditorView: View {
                         .padding(8)
                         .background(Color.green.opacity(0.05))
                         .cornerRadius(6)
-                    }
                 }
             }
         }
