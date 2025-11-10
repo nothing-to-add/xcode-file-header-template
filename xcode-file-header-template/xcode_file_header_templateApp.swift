@@ -9,6 +9,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 @main
 struct xcode_file_header_templateApp: App {
@@ -18,7 +19,10 @@ struct xcode_file_header_templateApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(templateManager)
+                .windowSizing()
         }
+        .windowResizability(.contentSize)
+        .defaultSize(NSScreen.optimalWindowSize(aspectRatio: 1.8))
         .commands {
             MenuCommands(templateManager: templateManager)
         }

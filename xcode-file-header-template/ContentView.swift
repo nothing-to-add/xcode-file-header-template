@@ -41,10 +41,11 @@ struct ContentView: View {
                     projectSelector
                 }
             }
-            .frame(minWidth: 300, maxWidth: 350)
+            .frame(minWidth: 300, idealWidth: 350, maxWidth: 400)
             
             // Main Content
             mainContent
+                .frame(minWidth: 600)
         }
         .navigationTitle("Xcode Template Macros")
         .toolbar {
@@ -89,11 +90,11 @@ struct ContentView: View {
     }
     
     private var header: some View {
-        VStack(alignment: .leading) {
-            Text("Xcode Template Macros Manager")
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Xcode Template Macros")
                 .font(.title2)
                 .fontWeight(.bold)
-            Text("Manage Xcode's IDETemplateMacros.plist files")
+            Text("Manage IDETemplateMacros.plist files")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -134,6 +135,8 @@ struct ContentView: View {
                 }
                 .buttonStyle(.bordered)
             }
+            
+            Spacer()
         }
         .padding(.horizontal)
         .padding(.bottom)
