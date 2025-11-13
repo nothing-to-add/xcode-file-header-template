@@ -21,7 +21,7 @@ struct ContentView: View {
     @State private var selectedMacroKey: String? = nil
     
     var body: some View {
-        NavigationView {
+        NavigationSplitView {
             // Sidebar
             VStack(alignment: .leading, spacing: 20) {
                 // Header
@@ -41,23 +41,24 @@ struct ContentView: View {
                     projectSelector
                 }
             }
-            .frame(minWidth: 300, idealWidth: 350, maxWidth: 400)
-            
+            .navigationSplitViewColumnWidth(350)
+        } detail: {
             // Main Content
             mainContent
                 .frame(minWidth: 600)
-        }
-        .navigationTitle("Xcode Template Macros")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingSettings = true
-                } label: {
-                    Image(systemName: "gear")
+                .navigationTitle("Xcode Template Macros")
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gear")
+                        }
+                        .help("Settings")
+                    }
                 }
-                .help("Settings")
-            }
         }
+        .navigationSplitViewStyle(.balanced)
         .onChange(of: selectedProjectPath) { _, newPath in
             if !newPath.isEmpty {
                 templateManager.loadProjectMacros(for: newPath)
