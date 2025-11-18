@@ -18,7 +18,7 @@ struct ContentView: View {
     @State private var showingSettings = false
     @State private var editingMacro: IDETemplateMacro?
     @State private var selectedProjectPath: String = ""
-    @State private var selectedMacroKey: String? = nil
+    @State private var selectedMacro: IDETemplateMacro? = nil
     
     var body: some View {
         NavigationSplitView {
@@ -112,7 +112,7 @@ struct ContentView: View {
     }
     
     private var macroList: some View {
-        List(selection: $selectedMacroKey) {
+        List(selection: $selectedMacro) {
             if selectedTab == 0 {
                 globalMacrosSection
             } else {
@@ -171,12 +171,11 @@ struct ContentView: View {
     
     private var mainContent: some View {
         Group {
-            if let selectedKey = selectedMacroKey {
+            if let selectedMacro {
                 let macros = selectedTab == 0 ? templateManager.globalMacros : templateManager.projectMacros
-                if macros[selectedKey] != nil {
+                if macros.contains(selectedMacro) {
                     SelectedMacroDetailView(
-                        key: selectedKey,
-                        isGlobal: selectedTab == 0
+                        macro: selectedMacro
                     )
                 } else {
                     EmptySelectionView(isGlobal: selectedTab == 0)
@@ -188,26 +187,26 @@ struct ContentView: View {
     }
     
     private func macroSection(
-        macros: [String: String],
+        macros: [IDETemplateMacro],
         isGlobal: Bool,
-        deleteMacro: @escaping (String) -> Void
+        deleteMacro: @escaping (IDETemplateMacro) -> MacroResult
     ) -> some View {
-        ForEach(Array(macros.keys.sorted()), id: \.self) { key in
+        ForEach(macros, id: \.id) { macro in
             SelectableMacroRow(
-                key: key,
-                value: macros[key] ?? "",
-                isBuiltIn: isGlobal && IDETemplateMacro.builtInMacros.contains { $0.key == key },
-                isSelected: selectedMacroKey == key
+                name: macro.name,
+                value: macro.value,
+                isBuiltIn: isGlobal && IDETemplateMacro.builtInMacros.contains { $0.name == macro.name },
+                isSelected: selectedMacro == macro
             ) {
-                editingMacro = IDETemplateMacro(key: key, value: macros[key] ?? "")
+                editingMacro = macro
                 showingMacroEditor = true
             } onDelete: {
-                deleteMacro(key)
-                if selectedMacroKey == key {
-                    selectedMacroKey = nil
+                deleteMacro(macro)
+                if selectedMacro == macro {
+                    selectedMacro = nil
                 }
             }
-            .tag(key)
+            .tag(macro)
         }
     }
     

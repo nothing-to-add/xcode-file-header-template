@@ -17,7 +17,7 @@ struct MacrosOverviewView: View {
     @State private var selectedMacroKey: String = ""
     @State private var selectedMacroValue: String = ""
     
-    private var macros: [String: String] {
+    private var macros: [IDETemplateMacro] {
         isGlobal ? templateManager.globalMacros : templateManager.projectMacros
     }
     
@@ -79,13 +79,11 @@ struct MacrosOverviewView: View {
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: 12) {
-                            ForEach(Array(macros.keys.sorted()), id: \.self) { key in
+                            ForEach(macros.sorted(by: { $0.name < $1.name}), id: \.self) { macro in
                                 MacroSummaryCard(
-                                    key: key,
-                                    value: macros[key] ?? ""
-                                ) {
-                                    selectedMacroKey = key
-                                    selectedMacroValue = macros[key] ?? ""
+                                    macro: macro) {
+                                        selectedMacroKey = macro.name
+                                    selectedMacroValue = macro.value
                                     showingMacroEditor = true
                                 }
                             }
@@ -100,7 +98,7 @@ struct MacrosOverviewView: View {
         .padding()
         .sheet(isPresented: $showingMacroEditor) {
             MacroEditorView(
-                macro: IDETemplateMacro(key: selectedMacroKey, value: selectedMacroValue),
+                macro: IDETemplateMacro(name: selectedMacroKey, value: selectedMacroValue),
                 isGlobal: isGlobal
             )
             .environmentObject(templateManager)
@@ -115,12 +113,12 @@ struct MacrosOverviewView: View {
     let templateManager = TemplateManager()
     // Add some sample data for preview
     templateManager.globalMacros = [
-        "FILEBASENAME": "MyFile",
-        "PROJECTNAME": "xcode-file-header-template",
-        "FULLUSERNAME": "nothing-to-add",
-        "DATE": "03/11/2025",
-        "YEAR": "2025",
-        "ORGANIZATIONNAME": "nothing-to-add"
+        IDETemplateMacro(name: "FILEBASENAME", value: "MyFile"),
+        IDETemplateMacro(name: "PROJECTNAME", value: "xcode-file-header-template"),
+        IDETemplateMacro(name: "FULLUSERNAME", value: "nothing-to-add"),
+        IDETemplateMacro(name: "DATE", value: "03/11/2025"),
+        IDETemplateMacro(name: "YEAR", value: "2025"),
+        IDETemplateMacro(name: "ORGANIZATIONNAME", value: "nothing-to-add")
     ]
     
     return MacrosOverviewView(isGlobal: true)

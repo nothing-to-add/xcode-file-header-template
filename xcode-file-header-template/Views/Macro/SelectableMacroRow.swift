@@ -12,7 +12,7 @@ import SwiftUI
 import CustomLogger
 
 struct SelectableMacroRow: View {
-    let key: String
+    let name: String
     let value: String
     let isBuiltIn: Bool
     let isSelected: Bool
@@ -23,7 +23,7 @@ struct SelectableMacroRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(key)
+                    Text(name)
                         .font(.headline)
                         .foregroundColor(isSelected ? .white : .primary)
                     
@@ -38,7 +38,7 @@ struct SelectableMacroRow: View {
                     }
                 }
                 
-                Text(key == "FILEHEADER" ? "File Header Template" : String(value.prefix(40)))
+                Text(name == "FILEHEADER" ? "File Header Template" : String(value.prefix(40)))
                     .font(.caption)
                     .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
                     .lineLimit(1)
@@ -82,7 +82,7 @@ struct SelectableMacroRow: View {
 #Preview {
     VStack(spacing: 8) {
         SelectableMacroRow(
-            key: "PROJECT_NAME",
+            name: "PROJECT_NAME",
             value: "MyAwesomeProject",
             isBuiltIn: true,
             isSelected: false,
@@ -91,7 +91,7 @@ struct SelectableMacroRow: View {
         )
         
         SelectableMacroRow(
-            key: "CUSTOM_MACRO",
+            name: "CUSTOM_MACRO",
             value: "This is a custom macro with some longer text to test truncation",
             isBuiltIn: false,
             isSelected: true,
@@ -100,7 +100,7 @@ struct SelectableMacroRow: View {
         )
         
         SelectableMacroRow(
-            key: "FILEHEADER",
+            name: "FILEHEADER",
             value: "File Header Template Content",
             isBuiltIn: true,
             isSelected: false,

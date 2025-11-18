@@ -14,8 +14,8 @@ import Combine
 import CustomLogger
 
 class TemplateManager: ObservableObject {
-    @Published var globalMacros: [String: String] = [:]
-    @Published var projectMacros: [String: String] = [:]
+    @Published var globalMacros: [IDETemplateMacro] = []
+    @Published var projectMacros: [IDETemplateMacro] = []
     @Published var currentProjectPath: String = ""
     @Published var availableTemplateKeys: [String] = []
     @Published var hasRealXcodeAccess: Bool = false
@@ -33,7 +33,7 @@ class TemplateManager: ObservableObject {
             .appendingPathComponent("Developer")
             .appendingPathComponent("Xcode")
             .appendingPathComponent("UserData")
-            .appendingPathComponent("IDETemplateMacros.plist")
+            .appendingPathComponent(projectIDETemplateMacrosFileName)
         
         // Initialize with all available template keys from the enum
         self.availableTemplateKeys = TemplateKeys.allKeys
@@ -64,8 +64,9 @@ class TemplateManager: ObservableObject {
         do {
             let data = try Data(contentsOf: effectiveGlobalMacrosURL)
             if let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
-                globalMacros = plist.compactMapValues { value in
-                    return value as? String
+                globalMacros = plist.compactMap { (key, value) in
+                    guard let stringValue = value as? String else { return nil }
+                    return IDETemplateMacro(name: key, value: stringValue)
                 }
             }
         } catch {
@@ -82,47 +83,96 @@ class TemplateManager: ObservableObject {
     
     func saveGlobalMacros() {
         do {
-            let data = try PropertyListSerialization.data(fromPropertyList: globalMacros, format: .xml, options: 0)
-            try data.write(to: effectiveGlobalMacrosURL)
-            Logger.shared.info("Successfully saved global IDETemplateMacros to: \(effectiveGlobalMacrosURL.path)")
+            try saveGlobalMacrosWithError()
         } catch {
             Logger.shared.error("Failed to save global IDETemplateMacros: \(error)")
         }
     }
     
-    private func getDefaultGlobalMacros() -> [String: String] {
+    private func getDefaultGlobalMacros() -> [IDETemplateMacro] {
         return [
-            "FULLUSERNAME": NSFullUserName(),
-            "COPYRIGHT": "Copyright © \(Calendar.current.component(.year, from: Date())) \(NSFullUserName()). All rights reserved.",
-            "ORGANIZATIONNAME": "Your Organization",
-            "FILEHEADER": """
-//
-//  ___FILENAME___
-//  ___PROJECTNAME___
-//
-//  Created by ___FULLUSERNAME___ on ___DATE___.
-//  ___COPYRIGHT___
-//
-"""
+            IDETemplateMacro(name: "FULLUSERNAME", value: NSFullUserName()),
+            IDETemplateMacro(name: "COPYRIGHT", value: "Copyright © \(Calendar.current.component(.year, from: Date())) \(NSFullUserName()). All rights reserved."),
+            IDETemplateMacro(name: "ORGANIZATIONNAME", value: "Your Organization"),
+            IDETemplateMacro(name: "FILEHEADER", value: """
+    //
+    //  ___FILENAME___
+    //  ___PROJECTNAME___
+    //
+    //  Created by ___FULLUSERNAME___ on ___DATE___.
+    //  ___COPYRIGHT___
+    //
+    """)
         ]
     }
     
-    func updateGlobalMacro(key: String, value: String) {
-        globalMacros[key] = value
-        saveGlobalMacros()
-    }
-    
-    func deleteGlobalMacro(key: String) {
-        globalMacros.removeValue(forKey: key)
-        saveGlobalMacros()
-    }
-    
-    func addCustomGlobalMacro(key: String, value: String) {
-        globalMacros[key] = value
-        if !availableTemplateKeys.contains(key) {
-            availableTemplateKeys.append(key)
+    func updateGlobalMacro(macro: IDETemplateMacro) -> MacroResult {
+        guard !macro.name.isEmpty else {
+            return .failure(.invalidName)
         }
-        saveGlobalMacros()
+        
+        if globalMacros.contains(where: { $0.name == macro.name && $0.id != macro.id }) {
+            return .failure(.duplicateName)
+        }
+        
+        if let index = globalMacros.firstIndex(where: { $0.id == macro.id }) {
+            globalMacros[index] = macro
+            
+            do {
+                try saveGlobalMacrosWithError()
+                return .success(.updated)
+            } catch {
+                return .failure(.saveFailed(error))
+            }
+        } else {
+            globalMacros.append(macro)
+            
+            do {
+                try saveGlobalMacrosWithError()
+                return .success(.added)
+            } catch {
+                // Remove the added macro if save failed
+                globalMacros.removeLast()
+                return .failure(.saveFailed(error))
+            }
+        }
+    }
+    
+    func deleteGlobalMacro(macro : IDETemplateMacro) -> MacroResult {
+        guard let index = globalMacros.firstIndex(where: { $0.id == macro.id }) else {
+            return .failure(.notFound)
+        }
+        
+        let removedMacro = globalMacros.remove(at: index)
+        
+        do {
+            try saveGlobalMacrosWithError()
+            return .success(.deleted)
+        } catch {
+            // Restore the removed macro if save failed
+            globalMacros.insert(removedMacro, at: index)
+            return .failure(.saveFailed(error))
+        }
+    }
+    
+    func addCustomGlobalMacro(macro: IDETemplateMacro) -> MacroResult {
+        guard !macro.name.isEmpty else {
+            return .failure(.invalidName)
+        }
+        
+        guard !globalMacros.contains(where: { $0.name == macro.name }) else {
+            return .failure(.duplicateName)
+        }
+        
+        globalMacros.append(macro)
+        
+        do {
+            try saveGlobalMacrosWithError()
+            return .success(.added)
+        } catch {
+            globalMacros.removeAll { $0.id == macro.id }
+            return .failure(.saveFailed(error))
+        }
     }
     
     // MARK: - Project IDETemplateMacros Management
@@ -134,46 +184,113 @@ class TemplateManager: ObservableObject {
         do {
             let data = try Data(contentsOf: projectMacrosURL)
             if let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
-                projectMacros = plist.compactMapValues { value in
-                    return value as? String
+                projectMacros = plist.compactMap { (name, value) in
+                    guard let stringValue = value as? String else { return nil }
+                    return IDETemplateMacro(name: name, value: stringValue)
                 }
             }
         } catch {
             Logger.shared.error("Failed to load project IDETemplateMacros: \(error)")
-            projectMacros = [:]
+            projectMacros = []
         }
     }
     
     func saveProjectMacros() {
-        guard !currentProjectPath.isEmpty else { return }
-        
-        let projectMacrosURL = URL(fileURLWithPath: currentProjectPath).appendingPathComponent(projectIDETemplateMacrosFileName)
-        
         do {
-            let data = try PropertyListSerialization.data(fromPropertyList: projectMacros, format: .xml, options: 0)
-            try data.write(to: projectMacrosURL)
-            Logger.shared.info("Successfully saved project IDETemplateMacros to: \(projectMacrosURL.path)")
+            try saveProjectMacrosWithError()
         } catch {
             Logger.shared.error("Failed to save project IDETemplateMacros: \(error)")
         }
     }
     
-    func updateProjectMacro(key: String, value: String) {
-        projectMacros[key] = value
-        saveProjectMacros()
-    }
-    
-    func deleteProjectMacro(key: String) {
-        projectMacros.removeValue(forKey: key)
-        saveProjectMacros()
-    }
-    
-    func addCustomProjectMacro(key: String, value: String) {
-        projectMacros[key] = value
-        if !availableTemplateKeys.contains(key) {
-            availableTemplateKeys.append(key)
+    func updateProjectMacro(macro: IDETemplateMacro) -> MacroResult {
+        guard !macro.name.isEmpty else {
+            return .failure(.invalidName)
         }
-        saveProjectMacros()
+        
+        if globalMacros.contains(where: { $0.name == macro.name && $0.id != macro.id }) {
+            return .failure(.duplicateName)
+        }
+        
+        if let index = projectMacros.firstIndex(where: { $0.id == macro.id }) {
+            projectMacros[index] = macro
+            
+            do {
+                try saveProjectMacrosWithError()
+                return .success(.updated)
+            } catch {
+                return .failure(.saveFailed(error))
+            }
+        } else {
+            projectMacros.append(macro)
+            
+            do {
+                try saveProjectMacrosWithError()
+                return .success(.added)
+            } catch {
+                projectMacros.removeLast()
+                return .failure(.saveFailed(error))
+            }
+        }
+    }
+    
+    func deleteProjectMacro(macro: IDETemplateMacro) -> MacroResult {
+        guard let index = projectMacros.firstIndex(where: { $0.id == macro.id }) else {
+            return .failure(.notFound)
+        }
+        
+        let removedMacro = projectMacros.remove(at: index)
+        
+        do {
+            try saveProjectMacrosWithError()
+            return .success(.deleted)
+        } catch {
+            projectMacros.insert(removedMacro, at: index)
+            return .failure(.saveFailed(error))
+        }
+    }
+    
+    func addCustomProjectMacro(macro: IDETemplateMacro) -> MacroResult {
+        guard !macro.name.isEmpty else {
+            return .failure(.invalidName)
+        }
+        
+        guard !globalMacros.contains(where: { $0.name == macro.name }) else {
+            return .failure(.duplicateName)
+        }
+        
+        projectMacros.append(macro)
+        
+        do {
+            try saveProjectMacrosWithError()
+            return  .success(.added)
+        } catch {
+            projectMacros.removeAll { $0.id == macro.id }
+            return .failure(.saveFailed(error))
+        }
+    }
+    
+    // MARK: - Fixed Save Methods with Error Throwing
+
+    private func saveGlobalMacrosWithError() throws {
+        let macroDict = Dictionary(uniqueKeysWithValues: globalMacros.map { ($0.name, $0.value) })
+        
+        let data = try PropertyListSerialization.data(fromPropertyList: macroDict, format: .xml, options: 0)
+        try data.write(to: effectiveGlobalMacrosURL)
+        Logger.shared.info("Successfully saved global IDETemplateMacros to: \(effectiveGlobalMacrosURL.path)")
+    }
+
+    private func saveProjectMacrosWithError() throws {
+        guard !currentProjectPath.isEmpty else {
+            throw MacroOperationError.invalidValue
+        }
+        
+        let projectMacrosURL = URL(fileURLWithPath: currentProjectPath).appendingPathComponent(projectIDETemplateMacrosFileName)
+        let macroDict = Dictionary(uniqueKeysWithValues: projectMacros.map { ($0.name, $0.value) })
+        
+        let data = try PropertyListSerialization.data(fromPropertyList: macroDict, format: .xml, options: 0)
+        try data.write(to: projectMacrosURL)
+        Logger.shared.info("Successfully saved project IDETemplateMacros to: \(projectMacrosURL.path)")
     }
     
     // MARK: - Template Keys Helper Methods
@@ -221,60 +338,122 @@ class TemplateManager: ObservableObject {
         saveProjectMacros()
     }
     
-    private func getDefaultProjectMacros() -> [String: String] {
+    private func getDefaultProjectMacros() -> [IDETemplateMacro] {
         let projectName = URL(fileURLWithPath: currentProjectPath).lastPathComponent
+        let orgName = globalMacros.first(where: { $0.name == "ORGANIZATIONNAME" })?.value ?? "Your Organization"
+        
         return [
-            "PROJECTNAME": projectName,
-            "ORGANIZATIONNAME": globalMacros["ORGANIZATIONNAME"] ?? "Your Organization"
+            IDETemplateMacro(name: "PROJECTNAME", value: projectName),
+            IDETemplateMacro(name: "ORGANIZATIONNAME", value: orgName)
         ]
     }
     
     // MARK: - Macro Value Resolution
-    
-    func resolveAllMacros() -> [String: String] {
-        var resolved = globalMacros
+
+    /// Resolves and merges all macros from both global and project sources into a single dictionary.
+    ///
+    /// This method is essential for the template system because:
+    /// 1. **Hierarchy Resolution**: Project macros override global macros when keys conflict
+    /// 2. **Template Processing**: Xcode's template engine expects a flat [String: String] dictionary
+    /// 3. **Performance**: Pre-resolves all macro values once instead of lookup per replacement
+    /// 4. **Consistency**: Ensures the same resolved values are used across all template operations
+    /// 5. **Preview Generation**: Provides the exact macro values that will be used in actual file creation
+    ///
+    /// The resolution order is:
+    /// - Global macros are added first (base layer)
+    /// - Project macros override globals with same keys (override layer)
+    /// - Built-in Xcode macros (like ___DATE___, ___TIME___) are handled separately during template processing
+    ///
+    /// - Returns: A dictionary where keys are macro names and values are resolved macro values
+    func resolveAllMacros() -> Result<[String: String], MacroOperationError> {
+        var resolved: [String: String] = [:]
         
-        // Project macros override global ones
-        for (key, value) in projectMacros {
-            resolved[key] = value
-        }
-        
-        return resolved
+            // Add global macros first (base layer)
+            for macro in globalMacros {
+                guard !macro.name.isEmpty else {
+                    return .failure(.invalidName)
+                }
+                guard !macro.value.isEmpty else {
+                    return .failure(.invalidValue)
+                }
+                resolved[macro.name] = macro.value
+            }
+            
+            // Project macros override global ones (override layer)
+            for macro in projectMacros {
+                guard !macro.name.isEmpty else {
+                    return .failure(.invalidName)
+                }
+                guard !macro.value.isEmpty else {
+                    return .failure(.invalidValue)
+                }
+                resolved[macro.name] = macro.value
+            }
+            
+            return .success(resolved)
     }
     
     func previewFileHeader() -> String {
-        let resolvedMacros = resolveAllMacros()
-        var header = resolvedMacros["FILEHEADER"] ?? getDefaultGlobalMacros()["FILEHEADER"]!
-        
-        // Replace Xcode built-in placeholders with preview values
-        header = header.replacingOccurrences(of: "___FILENAME___", with: "ExampleFile.swift")
-        header = header.replacingOccurrences(of: "___FILEBASENAME___", with: "ExampleFile")
-        header = header.replacingOccurrences(of: "___FILEBASENAMEASIDENTIFIER___", with: "ExampleFile")
-        header = header.replacingOccurrences(of: "___PROJECTNAME___", with: resolvedMacros["PROJECTNAME"] ?? "MyProject")
-        header = header.replacingOccurrences(of: "___PRODUCTNAME___", with: resolvedMacros["PRODUCTNAME"] ?? "MyProject")
-        header = header.replacingOccurrences(of: "___WORKSPACENAME___", with: resolvedMacros["WORKSPACENAME"] ?? "MyProject")
-        header = header.replacingOccurrences(of: "___FULLUSERNAME___", with: resolvedMacros["FULLUSERNAME"] ?? NSFullUserName())
-        header = header.replacingOccurrences(of: "___USERNAME___", with: resolvedMacros["USERNAME"] ?? NSUserName())
-        header = header.replacingOccurrences(of: "___DATE___", with: DateFormatter.shortDateFormatter.string(from: Date()))
-        header = header.replacingOccurrences(of: "___TIME___", with: DateFormatter.shortDateFormatter.string(from: Date()))
-        header = header.replacingOccurrences(of: "___YEAR___", with: "\(Calendar.current.component(.year, from: Date()))")
-        header = header.replacingOccurrences(of: "___MONTH___", with: "\(Calendar.current.component(.month, from: Date()))")
-        header = header.replacingOccurrences(of: "___DAY___", with: "\(Calendar.current.component(.day, from: Date()))")
-        header = header.replacingOccurrences(of: "___COPYRIGHT___", with: resolvedMacros["COPYRIGHT"] ?? "")
-        header = header.replacingOccurrences(of: "___ORGANIZATIONNAME___", with: resolvedMacros["ORGANIZATIONNAME"] ?? "")
-        header = header.replacingOccurrences(of: "___CLASSPREFIX___", with: resolvedMacros["CLASSPREFIX"] ?? "")
-        header = header.replacingOccurrences(of: "___PACKAGENAME___", with: resolvedMacros["PACKAGENAME"] ?? "MyPackage")
-        header = header.replacingOccurrences(of: "___TARGETNAME___", with: resolvedMacros["TARGETNAME"] ?? "MyTarget")
-        header = header.replacingOccurrences(of: "___SWIFTVERSION___", with: resolvedMacros["SWIFTVERSION"] ?? "6.0")
-        header = header.replacingOccurrences(of: "___VERSION___", with: resolvedMacros["VERSION"] ?? "1.0")
-        header = header.replacingOccurrences(of: "___BUILD___", with: resolvedMacros["BUILD"] ?? "1")
-        header = header.replacingOccurrences(of: "___PLATFORM___", with: resolvedMacros["PLATFORM"] ?? "macOS")
-        header = header.replacingOccurrences(of: "___XCODEVERSION___", with: resolvedMacros["XCODEVERSION"] ?? "15.0")
-        header = header.replacingOccurrences(of: "___DEPLOYMENTTARGET___", with: resolvedMacros["DEPLOYMENTTARGET"] ?? "14.0")
-        header = header.replacingOccurrences(of: "___COMPANYIDENTIFIER___", with: resolvedMacros["COMPANYIDENTIFIER"] ?? "com.example")
-        header = header.replacingOccurrences(of: "___DEVELOPMENTTEAM___", with: resolvedMacros["DEVELOPMENTTEAM"] ?? "TEAM123")
-        
-        return header
+        switch resolveAllMacros() {
+        case .success(let resolvedMacros):
+            // Get the file header template
+            let defaultFileHeader = getDefaultGlobalMacros().first(where: { $0.name == "FILEHEADER" })?.value ?? ""
+            var header = resolvedMacros["FILEHEADER"] ?? defaultFileHeader
+            
+            // Replace Xcode built-in placeholders with preview values
+            // These are handled by Xcode's template engine in real usage
+            header = header.replacingOccurrences(of: "___FILENAME___", with: "ExampleFile.swift")
+            header = header.replacingOccurrences(of: "___FILEBASENAME___", with: "ExampleFile")
+            header = header.replacingOccurrences(of: "___FILEBASENAMEASIDENTIFIER___", with: "ExampleFile")
+            header = header.replacingOccurrences(of: "___PROJECTNAME___", with: resolvedMacros["PROJECTNAME"] ?? "MyProject")
+            header = header.replacingOccurrences(of: "___PRODUCTNAME___", with: resolvedMacros["PRODUCTNAME"] ?? "MyProject")
+            header = header.replacingOccurrences(of: "___WORKSPACENAME___", with: resolvedMacros["WORKSPACENAME"] ?? "MyProject")
+            header = header.replacingOccurrences(of: "___FULLUSERNAME___", with: resolvedMacros["FULLUSERNAME"] ?? NSFullUserName())
+            header = header.replacingOccurrences(of: "___USERNAME___", with: resolvedMacros["USERNAME"] ?? NSUserName())
+            header = header.replacingOccurrences(of: "___DATE___", with: DateFormatter.shortDateFormatter.string(from: Date()))
+            header = header.replacingOccurrences(of: "___TIME___", with: DateFormatter.shortDateFormatter.string(from: Date()))
+            header = header.replacingOccurrences(of: "___YEAR___", with: "\(Calendar.current.component(.year, from: Date()))")
+            header = header.replacingOccurrences(of: "___MONTH___", with: "\(Calendar.current.component(.month, from: Date()))")
+            header = header.replacingOccurrences(of: "___DAY___", with: "\(Calendar.current.component(.day, from: Date()))")
+            header = header.replacingOccurrences(of: "___COPYRIGHT___", with: resolvedMacros["COPYRIGHT"] ?? "")
+            header = header.replacingOccurrences(of: "___ORGANIZATIONNAME___", with: resolvedMacros["ORGANIZATIONNAME"] ?? "")
+            header = header.replacingOccurrences(of: "___CLASSPREFIX___", with: resolvedMacros["CLASSPREFIX"] ?? "")
+            header = header.replacingOccurrences(of: "___PACKAGENAME___", with: resolvedMacros["PACKAGENAME"] ?? "MyPackage")
+            header = header.replacingOccurrences(of: "___TARGETNAME___", with: resolvedMacros["TARGETNAME"] ?? "MyTarget")
+            header = header.replacingOccurrences(of: "___SWIFTVERSION___", with: resolvedMacros["SWIFTVERSION"] ?? "6.0")
+            header = header.replacingOccurrences(of: "___VERSION___", with: resolvedMacros["VERSION"] ?? "1.0")
+            header = header.replacingOccurrences(of: "___BUILD___", with: resolvedMacros["BUILD"] ?? "1")
+            header = header.replacingOccurrences(of: "___PLATFORM___", with: resolvedMacros["PLATFORM"] ?? "macOS")
+            header = header.replacingOccurrences(of: "___XCODEVERSION___", with: resolvedMacros["XCODEVERSION"] ?? "15.0")
+            header = header.replacingOccurrences(of: "___DEPLOYMENTTARGET___", with: resolvedMacros["DEPLOYMENTTARGET"] ?? "14.0")
+            header = header.replacingOccurrences(of: "___COMPANYIDENTIFIER___", with: resolvedMacros["COMPANYIDENTIFIER"] ?? "com.example")
+            header = header.replacingOccurrences(of: "___DEVELOPMENTTEAM___", with: resolvedMacros["DEVELOPMENTTEAM"] ?? "TEAM123")
+            
+            return header
+            
+        case .failure(let error):
+            return "\(error)"
+        }
+    }
+    
+    /// Get the value of a specific macro from the resolved macro collection
+    func getMacroValue(key: String) -> Result<String?, MacroOperationError> {
+        switch resolveAllMacros() {
+        case .success(let macros):
+            return .success(macros[key])
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    /// Check if a specific macro key exists in the resolved collection
+    func hasMacro(key: String) -> Result<Bool, MacroOperationError> {
+        switch resolveAllMacros() {
+        case .success(let macros):
+            return .success(macros.keys.contains(key))
+        case .failure(let error):
+            return .failure(error)
+        }
     }
     
     // MARK: - Backup and Restore
@@ -568,19 +747,35 @@ class TemplateManager: ObservableObject {
         }
     }
     
-    func importGlobalMacros(from url: URL) throws {
-        let data = try Data(contentsOf: url)
-        if let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
-            let importedMacros = plist.compactMapValues { value in
-                return value as? String
+    func importGlobalMacros(from url: URL) -> Result<Int, MacroOperationError> {
+        do {
+            let data = try Data(contentsOf: url)
+            guard let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+                return .failure(MacroOperationError.invalidValue)
             }
+            
+            let importedMacros = plist.compactMap { (name, value) -> IDETemplateMacro? in
+                guard let stringValue = value as? String else { return nil }
+                return IDETemplateMacro(name: name, value: stringValue)
+            }
+            
+            var importedCount = 0
             
             // Merge with existing macros
-            for (key, value) in importedMacros {
-                globalMacros[key] = value
+            for importedMacro in importedMacros {
+                if let index = globalMacros.firstIndex(where: { $0.name == importedMacro.name }) {
+                    globalMacros[index] = importedMacro
+                } else {
+                    globalMacros.append(importedMacro)
+                }
+                importedCount += 1
             }
             
-            saveGlobalMacros()
+            try saveGlobalMacrosWithError()
+            return .success(importedCount)
+            
+        } catch {
+            return .failure(.saveFailed(error))
         }
     }
 }

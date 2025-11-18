@@ -197,8 +197,22 @@ struct ProjectSettingsView: View {
         
         // Extract project name from path
         let projectURL = URL(fileURLWithPath: selectedProjectPath)
-        projectName = templateManager.projectMacros["PROJECTNAME"] ?? projectURL.lastPathComponent
-        organizationName = templateManager.projectMacros["ORGANIZATIONNAME"] ?? templateManager.globalMacros["ORGANIZATIONNAME"] ?? "Your Organization"
+
+        // Find PROJECTNAME in project macros, fallback to folder name
+        if let projectMacro = templateManager.projectMacros.first(where: { $0.name == "PROJECTNAME" }) {
+            projectName = projectMacro.value
+        } else {
+            projectName = projectURL.lastPathComponent
+        }
+        
+        // Find ORGANIZATIONNAME in project macros, fallback to global macros
+        if let orgMacro = templateManager.projectMacros.first(where: { $0.name == "ORGANIZATIONNAME" }) {
+            organizationName = orgMacro.value
+        } else if let globalOrgMacro = templateManager.globalMacros.first(where: { $0.name == "ORGANIZATIONNAME" }) {
+            organizationName = globalOrgMacro.value
+        } else {
+            organizationName = "Your Organization"
+        }
         
         // Check if IDETemplateMacros.plist exists
         hasExistingMacros = templateManager.hasProjectMacros(at: selectedProjectPath)
@@ -207,9 +221,12 @@ struct ProjectSettingsView: View {
     private func createProjectMacros() {
         guard !selectedProjectPath.isEmpty else { return }
         
-        // Update project macros with current values
-        templateManager.updateProjectMacro(key: "PROJECTNAME", value: projectName)
-        templateManager.updateProjectMacro(key: "ORGANIZATIONNAME", value: organizationName)
+        // Update project macros with current values using IDETemplateMacro objects
+        let projectNameMacro = IDETemplateMacro(name: "PROJECTNAME", value: projectName)
+        let organizationMacro = IDETemplateMacro(name: "ORGANIZATIONNAME", value: organizationName)
+        
+        templateManager.updateProjectMacro(macro: projectNameMacro)
+        templateManager.updateProjectMacro(macro: organizationMacro)
         
         templateManager.createProjectMacrosFile()
         hasExistingMacros = true
@@ -218,8 +235,12 @@ struct ProjectSettingsView: View {
     private func updateProjectMacros() {
         guard !selectedProjectPath.isEmpty else { return }
         
-        templateManager.updateProjectMacro(key: "PROJECTNAME", value: projectName)
-        templateManager.updateProjectMacro(key: "ORGANIZATIONNAME", value: organizationName)
+        // Update project macros with current values using IDETemplateMacro objects
+        let projectNameMacro = IDETemplateMacro(name: "PROJECTNAME", value: projectName)
+        let organizationMacro = IDETemplateMacro(name: "ORGANIZATIONNAME", value: organizationName)
+        
+        templateManager.updateProjectMacro(macro: projectNameMacro)
+        templateManager.updateProjectMacro(macro: organizationMacro)
     }
 }
 

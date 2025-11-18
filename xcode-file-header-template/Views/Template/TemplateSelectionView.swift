@@ -81,8 +81,17 @@ struct TemplateSelectionView: View {
     }
     
     private func updatePreview() {
+        guard selectedIndex < templates.count else { return }
+        
         let template = templates[selectedIndex]
-        let resolvedMacros = templateManager.resolveAllMacros()
+        let resolvedMacros: [String: String]
+        switch templateManager.resolveAllMacros() {
+        case .success(let macros):
+            resolvedMacros = macros
+        case .failure(let error):
+            print("Failed to resolve macros: \(error.localizedDescription)")
+            resolvedMacros = [:]
+        }
         
         previewContent = template.content.replacingXcodePlaceholders(
             filename: "ExampleFile.swift",
@@ -94,15 +103,15 @@ struct TemplateSelectionView: View {
     }
     
     private func applyTemplate() {
-        let selectedTemplate = templates[selectedIndex]
-        
-        if isGlobal {
-            templateManager.globalMacros["FILEHEADER"] = selectedTemplate.content
-            templateManager.saveGlobalMacros()
-        } else {
-            templateManager.projectMacros["FILEHEADER"] = selectedTemplate.content
-            templateManager.saveProjectMacros()
-        }
+//        let selectedTemplate = templates[selectedIndex]
+//        
+//        if isGlobal {
+//            templateManager.globalMacros["FILEHEADER"] = selectedTemplate.content
+//            templateManager.saveGlobalMacros()
+//        } else {
+//            templateManager.projectMacros["FILEHEADER"] = selectedTemplate.content
+//            templateManager.saveProjectMacros()
+//        }
     }
 }
 

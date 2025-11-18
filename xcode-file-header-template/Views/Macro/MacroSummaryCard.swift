@@ -11,27 +11,25 @@
 import SwiftUI
 
 struct MacroSummaryCard: View {
-    let key: String
-    let value: String
+    let macro: IDETemplateMacro
     let onTap: (() -> Void)?
     
-    init(key: String, value: String, onTap: (() -> Void)? = nil) {
-        self.key = key
-        self.value = value
+    init(macro: IDETemplateMacro, onTap: (() -> Void)? = nil) {
+        self.macro = macro
         self.onTap = onTap
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(key)
+                Text(macro.name)
                     .font(.headline)
                     .foregroundColor(.primary)
                 
                 Spacer()
             }
             
-            Text(key == "FILEHEADER" ? "File Header Template" : String(value.prefix(60)))
+            Text(macro.name == "FILEHEADER" ? "File Header Template" : String(macro.value.prefix(60)))
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .lineLimit(2)
@@ -48,16 +46,16 @@ struct MacroSummaryCard: View {
 
 #Preview {
     VStack(spacing: 16) {
-        MacroSummaryCard(key: "FILEHEADER", value: "Example file header template content") {
+        MacroSummaryCard(macro: IDETemplateMacro(name: "FILEHEADER", value: "Example file header template content")) {
             print("FILEHEADER tapped")
         }
-        MacroSummaryCard(key: "PROJECTNAME", value: "xcode-file-header-template") {
+        MacroSummaryCard(macro: IDETemplateMacro(name: "PROJECTNAME", value: "xcode-file-header-template")) {
             print("PROJECTNAME tapped")
         }
-        MacroSummaryCard(key: "FILENAME", value: "MacroSummaryCard.swift") {
+        MacroSummaryCard(macro: IDETemplateMacro(name: "FILENAME", value: "MacroSummaryCard.swift")) {
             print("FILENAME tapped")
         }
-        MacroSummaryCard(key: "AUTHOR", value: "nothing-to-add") {
+        MacroSummaryCard(macro: IDETemplateMacro(name: "AUTHOR", value: "nothing-to-add")) {
             print("AUTHOR tapped")
         }
     }

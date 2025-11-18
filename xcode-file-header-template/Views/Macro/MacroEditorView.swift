@@ -75,7 +75,7 @@ struct MacroEditorView: View {
         }
         .onAppear {
             if let macro {
-                key = macro.key
+                key = macro.name
                 value = macro.value
                 isEditingExisting = true
             }
@@ -220,10 +220,12 @@ struct MacroEditorView: View {
     }
     
     private func saveMacro() {
+        guard let macro else { return }
+        
         if isGlobal {
-            templateManager.updateGlobalMacro(key: key, value: value)
+            templateManager.updateGlobalMacro(macro: macro)
         } else {
-            templateManager.updateProjectMacro(key: key, value: value)
+            templateManager.updateProjectMacro(macro: macro)
         }
     }
 }

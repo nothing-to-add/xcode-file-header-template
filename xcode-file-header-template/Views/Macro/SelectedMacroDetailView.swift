@@ -11,39 +11,33 @@
 import SwiftUI
 
 struct SelectedMacroDetailView: View {
-    let key: String
-    let isGlobal: Bool
+    let macro: IDETemplateMacro
     @EnvironmentObject var templateManager: TemplateManager
     @State private var showingTemplateSelector = false
-    
-    private var value: String {
-        let macros = isGlobal ? templateManager.globalMacros : templateManager.projectMacros
-        return macros[key] ?? ""
-    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             // Header
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(key)
+                    Text(macro.name)
                         .font(.title)
                         .fontWeight(.bold)
                     
                     Spacer()
                     
-                    Label(isGlobal ? "Global" : "Project",
-                          systemImage: isGlobal ? "globe" : "folder")
-                        .foregroundColor(isGlobal ? .blue : .green)
+                    Label(macro.isGlobal ? "Global" : "Project",
+                          systemImage: macro.isGlobal ? "globe" : "folder")
+                    .foregroundColor(macro.isGlobal ? .blue : .green)
                 }
                 
-                Text(IDETemplateMacro.getDescription(for: key))
+                Text(IDETemplateMacro.getDescription(for: macro.name))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
             
             // Template selector for FILEHEADER
-            if key == "FILEHEADER" {
+            if macro.name == "FILEHEADER" {
                 GroupBox("File Header Templates") {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
@@ -75,7 +69,7 @@ struct SelectedMacroDetailView: View {
                 // Regular macro value display
                 GroupBox("Macro Value") {
                     ScrollView {
-                        Text(value)
+                        Text(macro.value)
                             .font(.system(.body, design: .monospaced))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding()
@@ -94,15 +88,14 @@ struct SelectedMacroDetailView: View {
             TemplateSelectionView(
                 templates: FileHeaderTemplate.defaultTemplates,
                 selectedIndex: .constant(0),
-                isGlobal: isGlobal
+                isGlobal: macro.isGlobal
             )
         }
     }
 }
 
 #Preview {
-    let templateManager = TemplateManager()
-    templateManager.globalMacros["FILEHEADER"] = """
+    let value = """
 //
 //  ___FILENAME___
 //  ___PROJECTNAME___
@@ -111,10 +104,12 @@ struct SelectedMacroDetailView: View {
 //  ___COPYRIGHT___
 //
 """
+    let macro = IDETemplateMacro(name: "FILEHEADER", value: value, isGlobal: true)
+    var templateManager = TemplateManager()
+//    templateManager.globalMacros.first(where: { $0.name == "FILEHEADER"}) = macro
     
-    return SelectedMacroDetailView(
-        key: "FILEHEADER",
-        isGlobal: true
+    SelectedMacroDetailView(
+        macro: macro
     )
     .environmentObject(templateManager)
 }

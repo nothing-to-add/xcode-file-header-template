@@ -15,7 +15,6 @@ import CustomLogger
 struct MacroSettingsView: View {
     @EnvironmentObject var templateManager: TemplateManager
     @State private var showingResetAlert = false
-    @State private var globalMacros: [String: Any] = [:]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -80,7 +79,7 @@ struct MacroSettingsView: View {
         }
         .padding()
         .onAppear {
-            loadGlobalMacros()
+            templateManager.loadGlobalMacros()
         }
         .alert("Reset IDETemplateMacros", isPresented: $showingResetAlert) {
             Button("Cancel", role: .cancel) { }
@@ -92,15 +91,9 @@ struct MacroSettingsView: View {
         }
     }
     
-    private func loadGlobalMacros() {
-        templateManager.loadGlobalMacros()
-        globalMacros = templateManager.globalMacros
-    }
-    
     private func selectXcodeUserDataFolder() {
         if templateManager.selectCustomGlobalMacrosLocation() {
             templateManager.loadGlobalMacros()
-            loadGlobalMacros()
         }
     }
     
@@ -134,19 +127,7 @@ struct MacroSettingsView: View {
         
         panel.begin { response in
             if response == .OK, let url = panel.urls.first {
-                do {
-                    let data = try Data(contentsOf: url)
-                    guard let importedMacros = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
-                        Logger.shared.error("Invalid plist format")
-                        return
-                    }
-                    
-                    templateManager.globalMacros = importedMacros.compactMapValues { $0 as? String }
-                    templateManager.saveGlobalMacros()
-                    loadGlobalMacros() // Refresh display
-                } catch {
-                    Logger.shared.error("Import failed: \(error)")
-                }
+                templateManager.importGlobalMacros(from: url)
             }
         }
     }
@@ -160,7 +141,7 @@ struct MacroSettingsView: View {
             if FileManager.default.fileExists(atPath: macrosURL.path) {
                 try FileManager.default.removeItem(at: macrosURL)
             }
-            loadGlobalMacros() // Refresh display
+            templateManager.loadGlobalMacros() // Refresh display
         } catch {
             Logger.shared.error("Failed to reset: \(error)")
         }

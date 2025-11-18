@@ -13,27 +13,29 @@ import Foundation
 /// Represents an Xcode Template Macro entry
 struct IDETemplateMacro: Identifiable, Equatable, Hashable {
     let id = UUID()
-    var key: String
+    var name: String
     var value: String
     var isBuiltIn: Bool
     var description: String
+    var isGlobal: Bool
     
-    init(key: String, value: String, isBuiltIn: Bool = false, description: String = "") {
-        self.key = key
+    init(name: String, value: String, isBuiltIn: Bool = false, description: String = "", isGlobal: Bool = false) {
+        self.name = name
         self.value = value
         self.isBuiltIn = isBuiltIn
-        self.description = description.isEmpty ? Self.getDescription(for: key) : description
+        self.description = description.isEmpty ? Self.getDescription(for: name) : description
+        self.isGlobal = isGlobal
     }
     
-    static func getDescription(for key: String) -> String {
-        if let templateKey = TemplateKeys(rawValue: key) {
-            return templateKey.description
+    static func getDescription(for name: String) -> String {
+        if let templateName = TemplateKeys(rawValue: name) {
+            return templateName.description
         }
         return "Custom template macro"
     }
     
     var isFileHeaderMacro: Bool {
-        return key == "FILEHEADER"
+        return name == "FILEHEADER"
     }
 }
 
@@ -41,7 +43,7 @@ struct IDETemplateMacro: Identifiable, Equatable, Hashable {
 extension IDETemplateMacro {
     static let builtInMacros: [IDETemplateMacro] = [
         IDETemplateMacro(
-            key: "FILEHEADER",
+            name: "FILEHEADER",
             value: """
 //
 //  ___FILENAME___
@@ -54,17 +56,17 @@ extension IDETemplateMacro {
             isBuiltIn: true
         ),
         IDETemplateMacro(
-            key: "FULLUSERNAME",
+            name: "FULLUSERNAME",
             value: NSFullUserName(),
             isBuiltIn: true
         ),
         IDETemplateMacro(
-            key: "COPYRIGHT",
+            name: "COPYRIGHT",
             value: "Copyright © \(Calendar.current.component(.year, from: Date())) \(NSFullUserName()). All rights reserved.",
             isBuiltIn: true
         ),
         IDETemplateMacro(
-            key: "ORGANIZATIONNAME",
+            name: "ORGANIZATIONNAME",
             value: "Your Organization",
             isBuiltIn: true
         )
