@@ -13,9 +13,7 @@ import SwiftUI
 struct MacrosOverviewView: View {
     let isGlobal: Bool
     @EnvironmentObject var templateManager: TemplateManager
-    @State private var showingMacroEditor = false
-    @State private var selectedMacroKey: String = ""
-    @State private var selectedMacroValue: String = ""
+    @State private var selectedMacro: IDETemplateMacro? = nil
     
     private var macros: [IDETemplateMacro] {
         isGlobal ? templateManager.globalMacros : templateManager.projectMacros
@@ -24,86 +22,92 @@ struct MacrosOverviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             // Header
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("\(isGlobal ? "Global" : "Project") IDETemplateMacros")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Spacer()
-                    
-                    Label(isGlobal ? "Global" : "Project",
-                          systemImage: isGlobal ? "globe" : "folder")
-                        .foregroundColor(isGlobal ? .blue : .green)
-                }
-                
-                if isGlobal {
-                    HStack {
-                        Text("~/Library/Developer/Xcode/UserData/IDETemplateMacros.plist")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .textSelection(.enabled)
-                        
-                        Spacer()
-                        
-                        if templateManager.hasRealXcodeAccess {
-                            Label("Connected", systemImage: "checkmark.circle.fill")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        } else {
-                            Button("Grant Access") {
-                                templateManager.requestXcodeAccessWithUserFriendlyPrompt()
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                        }
-                    }
-                } else {
-                    Text("<ProjectPath>/IDETemplateMacros.plist")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .textSelection(.enabled)
-                }
-            }
+            header
             
             if macros.isEmpty {
                 EmptyMacrosView(isGlobal: isGlobal)
             } else {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Select a macro from the sidebar to view and edit its details.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    GroupBox("Available Macros (\(macros.count))") {
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 12) {
-                            ForEach(macros.sorted(by: { $0.name < $1.name}), id: \.self) { macro in
-                                MacroSummaryCard(
-                                    macro: macro) {
-                                        selectedMacroKey = macro.name
-                                    selectedMacroValue = macro.value
-                                    showingMacroEditor = true
-                                }
-                            }
-                        }
-                        .padding()
-                    }
-                }
+                macrosContent
             }
             
             Spacer()
         }
         .padding()
-        .sheet(isPresented: $showingMacroEditor) {
+        .sheet(item: $selectedMacro) { macro in
             MacroEditorView(
-                macro: IDETemplateMacro(name: selectedMacroKey, value: selectedMacroValue),
+                macro: macro,
                 isGlobal: isGlobal
             )
             .environmentObject(templateManager)
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+        }
+    }
+    
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("\(isGlobal ? "Global" : "Project") IDETemplateMacros")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                Label(isGlobal ? "Global" : "Project",
+                      systemImage: isGlobal ? "globe" : "folder")
+                    .foregroundColor(isGlobal ? .blue : .green)
+            }
+            
+            if isGlobal {
+                HStack {
+                    Text("~/Library/Developer/Xcode/UserData/IDETemplateMacros.plist")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                    
+                    Spacer()
+                    
+                    if templateManager.hasRealXcodeAccess {
+                        Label("Connected", systemImage: "checkmark.circle.fill")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    } else {
+                        Button("Grant Access") {
+                            templateManager.requestXcodeAccessWithUserFriendlyPrompt()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                }
+            } else {
+                Text("<ProjectPath>/IDETemplateMacros.plist")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
+            }
+        }
+    }
+    
+    private var macrosContent: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Select a macro from the sidebar to view and edit its details.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            GroupBox("Available Macros (\(macros.count))") {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 12) {
+                    ForEach(macros.sorted(by: { $0.name < $1.name}), id: \.self) { macro in
+                        MacroSummaryCard(
+                            macro: macro) {
+                                selectedMacro = macro
+                        }
+                    }
+                }
+                .padding()
+            }
         }
     }
 }
