@@ -72,3 +72,13 @@ extension IDETemplateMacro {
         )
     ]
 }
+
+extension IDETemplateMacro {
+    static func getEmptyMacro(isGlobal: Bool) -> IDETemplateMacro {
+        IDETemplateMacro(name: "",
+                         value: "",
+                         isBuiltIn: false,
+                         description: "",
+                         isGlobal: isGlobal)
+    }
+}

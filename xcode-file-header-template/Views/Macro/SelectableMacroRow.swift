@@ -56,6 +56,7 @@ struct SelectableMacroRow: View {
                         .frame(width: 24, height: 24)
                 }
                 .buttonStyle(.plain)
+                .contentShape(Rectangle())
                 .help("Edit")
                 
                 if !isBuiltIn {
@@ -68,6 +69,7 @@ struct SelectableMacroRow: View {
                             .frame(width: 24, height: 24)
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                     .help("Delete")
                 }
             }

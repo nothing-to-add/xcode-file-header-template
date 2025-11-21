@@ -13,7 +13,6 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var templateManager: TemplateManager
     @State private var selectedTab = 0
-    @State private var showingMacroEditor = false
     @State private var showingProjectSettings = false
     @State private var showingSettings = false
     @State private var editingMacro: IDETemplateMacro?
@@ -65,9 +64,9 @@ struct ContentView: View {
             }
         }
         // Move all sheet presentations outside of NavigationView scope
-        .sheet(isPresented: $showingMacroEditor) {
+        .sheet(item: $editingMacro) { macro in
             MacroEditorView(
-                macro: editingMacro,
+                macro: macro,
                 isGlobal: selectedTab == 0
             )
             .environmentObject(templateManager)
@@ -125,8 +124,7 @@ struct ContentView: View {
     private var actionButtons: some View {
         HStack {
             Button("Add Macro") {
-                editingMacro = nil
-                showingMacroEditor = true
+                editingMacro = IDETemplateMacro.getEmptyMacro(isGlobal: selectedTab == 0)
             }
             .buttonStyle(.bordered)
             
@@ -199,7 +197,6 @@ struct ContentView: View {
                 isSelected: selectedMacro == macro
             ) {
                 editingMacro = macro
-                showingMacroEditor = true
             } onDelete: {
                 deleteMacro(macro)
                 if selectedMacro == macro {
