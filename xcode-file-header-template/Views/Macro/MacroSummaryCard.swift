@@ -29,7 +29,7 @@ struct MacroSummaryCard: View {
                 Spacer()
             }
             
-            Text(macro.name == "FILEHEADER" ? "File Header Template" : String(macro.value.prefix(60)))
+            Text(macro.isFileHeaderMacro ? "File Header Template" : String(macro.value.prefix(60)))
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .lineLimit(2)

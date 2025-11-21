@@ -191,8 +191,7 @@ struct ContentView: View {
     ) -> some View {
         ForEach(macros, id: \.id) { macro in
             SelectableMacroRow(
-                name: macro.name,
-                value: macro.value,
+                macro: macro,
                 isBuiltIn: isGlobal && IDETemplateMacro.builtInMacros.contains { $0.name == macro.name },
                 isSelected: selectedMacro == macro
             ) {

@@ -12,8 +12,7 @@ import SwiftUI
 import CustomLogger
 
 struct SelectableMacroRow: View {
-    let name: String
-    let value: String
+    let macro: IDETemplateMacro
     let isBuiltIn: Bool
     let isSelected: Bool
     let onEdit: () -> Void
@@ -23,7 +22,7 @@ struct SelectableMacroRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(name)
+                    Text(macro.name)
                         .font(.headline)
                         .foregroundColor(isSelected ? .white : .primary)
                     
@@ -38,7 +37,7 @@ struct SelectableMacroRow: View {
                     }
                 }
                 
-                Text(name == "FILEHEADER" ? "File Header Template" : String(value.prefix(40)))
+                Text(macro.isFileHeaderMacro ? "File Header Template" : String(macro.value.prefix(40)))
                     .font(.caption)
                     .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
                     .lineLimit(1)
@@ -84,8 +83,7 @@ struct SelectableMacroRow: View {
 #Preview {
     VStack(spacing: 8) {
         SelectableMacroRow(
-            name: "PROJECT_NAME",
-            value: "MyAwesomeProject",
+            macro: IDETemplateMacro(name: "PROJECT_NAME", value: "MyAwesomeProject"),
             isBuiltIn: true,
             isSelected: false,
             onEdit: { Logger.shared.info("Edit tapped") },
@@ -93,8 +91,7 @@ struct SelectableMacroRow: View {
         )
         
         SelectableMacroRow(
-            name: "CUSTOM_MACRO",
-            value: "This is a custom macro with some longer text to test truncation",
+            macro: IDETemplateMacro(name: "CUSTOM_MACRO", value: "This is a custom macro with some longer text to test truncation"),
             isBuiltIn: false,
             isSelected: true,
             onEdit: { Logger.shared.info("Edit tapped") },
@@ -102,8 +99,7 @@ struct SelectableMacroRow: View {
         )
         
         SelectableMacroRow(
-            name: "FILEHEADER",
-            value: "File Header Template Content",
+            macro: IDETemplateMacro(name: "FILEHEADER", value: "File Header Template Content"),
             isBuiltIn: true,
             isSelected: false,
             onEdit: { Logger.shared.info("Edit tapped") },

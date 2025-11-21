@@ -397,7 +397,7 @@ class TemplateManager: ObservableObject {
         switch resolveAllMacros() {
         case .success(let resolvedMacros):
             // Get the file header template
-            let defaultFileHeader = getDefaultGlobalMacros().first(where: { $0.name == "FILEHEADER" })?.value ?? ""
+            let defaultFileHeader = getDefaultGlobalMacros().first(where: { $0.isFileHeaderMacro })?.value ?? ""
             var header = resolvedMacros["FILEHEADER"] ?? defaultFileHeader
             
             // Replace Xcode built-in placeholders with preview values
