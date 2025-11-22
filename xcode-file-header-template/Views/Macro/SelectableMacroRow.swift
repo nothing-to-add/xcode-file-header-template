@@ -45,20 +45,20 @@ struct SelectableMacroRow: View {
             
             Spacer()
             
-            HStack(spacing: 8) {
-                Button {
-                    onEdit()
-                } label: {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(isSelected ? .white : .secondary)
-                        .frame(width: 24, height: 24)
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-                .help("Edit")
-                
-                if !isBuiltIn {
+            if !isBuiltIn {
+                HStack(spacing: 8) {
+                    Button {
+                        onEdit()
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(isSelected ? .white : .secondary)
+                            .frame(width: 24, height: 24)
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                    .help("Edit")
+                    
                     Button {
                         onDelete()
                     } label: {
