@@ -58,7 +58,7 @@ struct SettingsView: View {
                     .tabItem {
                         Label("IDETemplateMacros", systemImage: "doc.text")
                     }
-                    .environmentObject(templateManager)
+//                    .environmentObject(templateManager)
                 
                 AboutView()
                     .tabItem {

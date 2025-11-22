@@ -30,7 +30,7 @@ struct ContentView: View {
                 tabSelection
                 
                 // Macro List
-                macroList
+                MacrosListSectionView(isGlobal: selectedTab == 0, selectedMacro: $selectedMacro, editingMacro: $editingMacro)
                 
                 // Action Buttons
                 actionButtons
@@ -110,17 +110,6 @@ struct ContentView: View {
         .padding(.horizontal)
     }
     
-    private var macroList: some View {
-        List(selection: $selectedMacro) {
-            if selectedTab == 0 {
-                globalMacrosSection
-            } else {
-                projectMacrosSection
-            }
-        }
-        .listStyle(SidebarListStyle())
-    }
-    
     private var actionButtons: some View {
         HStack {
             Button("Add Macro") {
@@ -182,44 +171,6 @@ struct ContentView: View {
                 MacrosOverviewView(isGlobal: selectedTab == 0)
             }
         }
-    }
-    
-    private func macroSection(
-        macros: [IDETemplateMacro],
-        isGlobal: Bool,
-        deleteMacro: @escaping (IDETemplateMacro) -> MacroResult
-    ) -> some View {
-        ForEach(macros, id: \.id) { macro in
-            SelectableMacroRow(
-                macro: macro,
-                isBuiltIn: isGlobal && IDETemplateMacro.builtInMacros.contains { $0.name == macro.name },
-                isSelected: selectedMacro == macro
-            ) {
-                editingMacro = macro
-            } onDelete: {
-                deleteMacro(macro)
-                if selectedMacro == macro {
-                    selectedMacro = nil
-                }
-            }
-            .tag(macro)
-        }
-    }
-    
-    private var globalMacrosSection: some View {
-        macroSection(
-            macros: templateManager.globalMacros,
-            isGlobal: true,
-            deleteMacro: templateManager.deleteGlobalMacro
-        )
-    }
-    
-    private var projectMacrosSection: some View {
-        macroSection(
-            macros: templateManager.projectMacros,
-            isGlobal: false,
-            deleteMacro: templateManager.deleteProjectMacro
-        )
     }
 }
 
