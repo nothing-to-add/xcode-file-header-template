@@ -20,6 +20,10 @@ class TemplateManager: ObservableObject {
     @Published var availableTemplateKeys: [String] = []
     @Published var hasRealXcodeAccess: Bool = false
     
+    var fileheaderTemplate: IDETemplateMacro? {
+        globalMacros.first(where: { $0.isFileHeaderMacro })
+    }
+    
     private let globalIDETemplateMacrosURL: URL
     private let projectIDETemplateMacrosFileName = "IDETemplateMacros.plist"
     

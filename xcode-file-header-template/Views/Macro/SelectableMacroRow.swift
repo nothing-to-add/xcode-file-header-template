@@ -12,6 +12,8 @@ import SwiftUI
 import CustomLogger
 
 struct SelectableMacroRow: View {
+    @EnvironmentObject var templateManager: TemplateManager
+    
     let macro: IDETemplateMacro
     let isBuiltIn: Bool
     let isSelected: Bool
@@ -33,6 +35,16 @@ struct SelectableMacroRow: View {
                             .padding(.vertical, 2)
                             .background(isSelected ? Color.white.opacity(0.2) : Color.blue.opacity(0.1))
                             .foregroundColor(isSelected ? .white : .blue)
+                            .cornerRadius(4)
+                    }
+                    
+                    if let value = templateManager.fileheaderTemplate?.value, macro.value == value, !isBuiltIn {
+                        Text("Currently in use")
+                            .font(.caption)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(isSelected ? Color.white.opacity(0.2) : Color.green.opacity(0.1))
+                            .foregroundColor(isSelected ? .white : .green)
                             .cornerRadius(4)
                     }
                 }
