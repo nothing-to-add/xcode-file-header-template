@@ -47,6 +47,15 @@ struct ContentView: View {
                 .frame(minWidth: 600)
                 .navigationTitle("Xcode Template Macros")
                 .toolbar {
+                    ToolbarItem(placement: .navigation) {
+                        Button {
+                            selectedMacro = nil
+                        } label: {
+                            Image(systemName: "house")
+                        }
+                        .help("Home")
+                    }
+                    
                     ToolbarItem(placement: .primaryAction) {
                         Button {
                             showingSettings = true
