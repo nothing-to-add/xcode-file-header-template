@@ -14,33 +14,34 @@ struct MacrosOverviewView: View {
     let isGlobal: Bool
     @EnvironmentObject var templateManager: TemplateManager
     @State private var selectedMacro: IDETemplateMacro? = nil
+    @State private var navigationPath = NavigationPath()
     
     private var macros: [IDETemplateMacro] {
         isGlobal ? templateManager.globalMacros : templateManager.projectMacros
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Header
-            header
-            
-            if macros.isEmpty {
-                EmptyMacrosView(isGlobal: isGlobal)
-            } else {
-                macrosContent
+        NavigationStack(path: $navigationPath) {
+            VStack(alignment: .leading, spacing: 20) {
+                // Header
+                header
+                
+                if macros.isEmpty {
+                    EmptyMacrosView(isGlobal: isGlobal)
+                } else {
+                    macrosContent
+                }
+                
+                Spacer()
             }
-            
-            Spacer()
-        }
-        .padding()
-        .sheet(item: $selectedMacro) { macro in
-            MacroEditorView(
-                macro: macro,
-                isGlobal: isGlobal
-            )
-            .environmentObject(templateManager)
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
+            .padding()
+            .navigationDestination(for: IDETemplateMacro.self) { macro in
+                MacroEditorView(
+                    macro: macro,
+                    isGlobal: isGlobal
+                )
+                .environmentObject(templateManager)
+            }
         }
     }
     
@@ -102,8 +103,8 @@ struct MacrosOverviewView: View {
                     ForEach(macros.sorted(by: { $0.name < $1.name}), id: \.self) { macro in
                         MacroSummaryCard(
                             macro: macro) {
-                                selectedMacro = macro
-                        }
+                                navigationPath.append(macro)
+                            }
                     }
                 }
                 .padding()
