@@ -36,7 +36,7 @@ struct MacrosOverviewView: View {
             }
             .padding()
             .navigationDestination(for: IDETemplateMacro.self) { macro in
-                MacroEditorView(
+                MacroEditSplitView(
                     macro: macro,
                     isGlobal: isGlobal
                 )
