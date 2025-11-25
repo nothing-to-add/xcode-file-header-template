@@ -28,27 +28,42 @@ struct MacroEditSplitView: View {
                     .frame(maxWidth: .infinity)
             }
             
-            Divider()
-            
-            MacroEditorView(
-                macro: macro,
-                isGlobal: isGlobal
-            )
-            .frame(maxWidth: .infinity)
-            .disabled(!isEditing)
-        }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(isEditing ? "Stop Editing" : "Start Editing") {
-                    isEditing.toggle()
-                }
-                .buttonStyle(.borderedProminent)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(isEditing ? Color.red : Color.blue)
+            if isNotFileHeaderMacro {
+                Divider()
+                
+                MacroEditorView(
+                    macro: macro,
+                    isGlobal: isGlobal
                 )
+                .frame(maxWidth: .infinity)
+                .disabled(!isEditing)
             }
         }
+        .navigationTitle("Xcode Template Macro Overview" + (isNotFileHeaderMacro ? " and Editor" : ""))
+        .toolbar {
+            if isNotFileHeaderMacro {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(isEditing ? "Stop Editing" : "Start Editing") {
+                        isEditing.toggle()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(isEditing ? Color.red : Color.blue)
+                    )
+                }
+            } else {
+                ToolbarItem(placement: .primaryAction) {
+                    Text("Built-in template can't be edited")
+                        .font(.headline)
+                        .foregroundStyle(.red)
+                }
+            }
+        }
+    }
+    
+    private var isNotFileHeaderMacro: Bool {
+        macro?.isFileHeaderMacro == false
     }
 }
 
